@@ -100,7 +100,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helv
 #content-inner th { background: var(--table-stripe); font-weight: 600; }
 #content-inner tr:nth-child(even) { background: var(--table-stripe); }
 #content-inner .katex { font-size: 1.05em; color: var(--katex-color); }
-#content-inner .katex .accent-body { position: relative; }
+#content-inner .katex .accent-body { position: relative; transform: translateY(-0.05em); }
 #content-inner .katex .accent-body .overlay { position: absolute; }
 #content-inner .katex svg { fill: currentColor; }
 #content-inner .katex-display { margin: .8em 0; overflow-x: auto; overflow-y: hidden; padding: 4px 0; }
@@ -433,6 +433,12 @@ function protectMath(md) {
     t = t.replace(/\$([\s\S]+?)\$/g, (_, e) => { const id = `\x00M_${blocks.length}\x00`; blocks.push({ d:0, e:e.trim() }); return id; });
     // inline math \(...\)
     t = t.replace(/\\\((.+?)\\\)/g, (_, e) => { const id = `\x00M_${blocks.length}\x00`; blocks.push({ d:0, e:e.trim() }); return id; });
+    // protect standalone \cdot and \cdotp used in regular text
+    t = t.replace(/\\(?:cdot|cdotp)(?=$|[^\w])/g, () => {
+      const id = `\x00M_${blocks.length}\x00`;
+      blocks.push({ d:0, e:'\\cdot' });
+      return id;
+    });
     return t;
   });
   return { text: processed.join(''), blocks };
@@ -440,6 +446,36 @@ function protectMath(md) {
 
 // ---- render pipeline ----
 let renderTimeout = null;
+
+function normalizeMathLatex(latex) {
+  // Handle \cdot, \cdotp and Unicode · within \text{} by splitting them out
+  // E.g., \text{N\cdotm} becomes \text{N}\cdot\text{m}
+  // and  \text{kg·m} becomes \text{kg}\cdot\text{m}
+  let result = latex;
+  
+  // Handle LaTeX commands: \cdot and \cdotp
+  result = result.replace(/\\text\{([^}]*?)(\\cdot|\\cdotp)([^}]*)\}/g, (match, before, cmd, after) => {
+    const cdot = '\\cdot';
+    const beforePart = before ? `\\text{${before}}` : '';
+    const afterPart = after ? `\\text{${after}}` : '';
+    return beforePart + cdot + afterPart;
+  });
+  
+  // Handle Unicode middle dot: · (U+00B7) and · (U+22C5)
+  result = result.replace(/\\text\{([^}]*?)(·|\u00B7)([^}]*)\}/g, (match, before, dot, after) => {
+    const beforePart = before ? `\\text{${before}}` : '';
+    const afterPart = after ? `\\text{${after}}` : '';
+    return beforePart + '\\cdot' + afterPart;
+  });
+  
+  // Replace remaining standalone \cdot and \cdotp with ·
+  result = result
+    .replace(/\\cdotp/g, '·')
+    .replace(/\\cdot/g, '·')
+    .replace(/\u00B7/g, '·');
+    
+  return result;
+}
 
 function render(markdown, name) {
   const contentBody = document.getElementById('content-body');
@@ -466,7 +502,14 @@ function render(markdown, name) {
       html = html.replace(/\x00M_(\d+)\x00/g, (_, idx) => {
         const b = blocks[+idx];
         if (!b) return '';
-        try { return katex.renderToString(b.e, { displayMode: !!b.d, throwOnError: false }); }
+        try {
+          const latex = normalizeMathLatex(b.e);
+          return katex.renderToString(latex, {
+            displayMode: !!b.d,
+            throwOnError: false,
+            macros: { '\\cdotp': '\\cdot' }
+          });
+        }
         catch { return b.d ? `<div class="math-error">${b.e}</div>` : `<span class="math-error">${b.e}</span>`; }
       });
       contentBody.innerHTML = html;
