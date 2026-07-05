@@ -405,12 +405,15 @@ function syncCustomColorInputs() {
 }
 
 // ---- marked configuration ----
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
 const linkRenderer = {
   link(href, title, text) {
-    return `<a href="${href}"${title ? ` title="${title}"` : ''} target="_blank" rel="noopener noreferrer">${text}</a>`;
+    return `<a href="${escHtml(href)}"${title ? ` title="${escHtml(title)}"` : ''} target="_blank" rel="noopener noreferrer">${escHtml(text)}</a>`;
   },
   image(href, title, text) {
-    return `<img src="${href}" alt="${text || ''}"${title ? ` title="${title}"` : ''} loading="lazy">`;
+    return `<img src="${escHtml(href)}" alt="${escHtml(text || '')}"${title ? ` title="${escHtml(title)}"` : ''} loading="lazy">`;
   }
 };
 marked.use({ renderer: linkRenderer, gfm: true, breaks: false });
@@ -426,8 +429,8 @@ function protectMath(md) {
     // block math $$...$$ and \[...\]
     t = t.replace(/\$\$([\s\S]+?)\$\$/g, (_, e) => { const id = `\x00M_${blocks.length}\x00`; blocks.push({ d:1, e:e.trim() }); return id; });
     t = t.replace(/\\\[([\s\S]+?)\\\]/g, (_, e) => { const id = `\x00M_${blocks.length}\x00`; blocks.push({ d:1, e:e.trim() }); return id; });
-    // inline math $...$ (allow spaces, but not inside code blocks — already protected above)
-    t = t.replace(/\$(.+?)\$/g, (_, e) => { const id = `\x00M_${blocks.length}\x00`; blocks.push({ d:0, e:e.trim() }); return id; });
+    // inline math $...$ (multiline, but not inside code blocks — already protected above)
+    t = t.replace(/\$([\s\S]+?)\$/g, (_, e) => { const id = `\x00M_${blocks.length}\x00`; blocks.push({ d:0, e:e.trim() }); return id; });
     // inline math \(...\)
     t = t.replace(/\\\((.+?)\\\)/g, (_, e) => { const id = `\x00M_${blocks.length}\x00`; blocks.push({ d:0, e:e.trim() }); return id; });
     return t;
@@ -436,10 +439,14 @@ function protectMath(md) {
 }
 
 // ---- render pipeline ----
+let renderTimeout = null;
+
 function render(markdown, name) {
   const contentBody = document.getElementById('content-body');
   const dropzone = document.getElementById('dropzone');
   const loading = document.getElementById('loading');
+
+  if (renderTimeout) { clearTimeout(renderTimeout); renderTimeout = null; }
 
   if (!markdown) {
     contentBody.innerHTML = '';
@@ -450,12 +457,12 @@ function render(markdown, name) {
   }
 
   loading.classList.add('show');
-  setTimeout(() => {
+  renderTimeout = setTimeout(() => {
+    renderTimeout = null;
     try {
       dropzone.style.display = 'none';
       const { text, blocks } = protectMath(markdown);
       let html = marked.parse(text);
-      // Restore math placeholders with KaTeX output
       html = html.replace(/\x00M_(\d+)\x00/g, (_, idx) => {
         const b = blocks[+idx];
         if (!b) return '';
@@ -471,6 +478,10 @@ function render(markdown, name) {
 
       addHeadingAnchors();
       rebuildToc(headingsList());
+      if (window.location.hash) {
+        const target = document.getElementById(window.location.hash.slice(1));
+        if (target) setTimeout(() => target.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+      }
     } catch (e) {
       contentBody.innerHTML = `<div style="color:#c00;padding:40px;text-align:center">渲染错误: ${e.message}</div>`;
     }
@@ -487,6 +498,7 @@ function addHeadingAnchors() {
     if (slugs.has(slug)) { let i = 2; while (slugs.has(slug + '-' + i)) i++; slug += '-' + i; }
     slugs.add(slug);
     h.id = slug;
+    h.dataset.headingText = text;
     const a = document.createElement('a');
     a.className = 'heading-anchor'; a.href = '#' + slug; a.textContent = '#';
     h.insertBefore(a, h.firstChild);
@@ -507,7 +519,7 @@ function rebuildToc(headings) {
     if (!h.id) return;
     const a = document.createElement('a');
     a.href = '#' + h.id;
-    a.textContent = h.textContent.replace(/^#\s*/, '').trim();
+    a.textContent = h.dataset.headingText || h.textContent.trim();
     a.className = 'toc-' + h.tagName.toLowerCase();
     a.addEventListener('click', e => {
       e.preventDefault();
@@ -529,27 +541,33 @@ function rebuildToc(headings) {
 }
 
 // ---- file loading ----
+let fileLoadSeq = 0;
+
 function loadFile(file) {
   if (!file || !file.name.match(/\.(md|markdown|mdown)$/i)) {
     alert('请选择 .md 文件');
     return;
   }
+  const seq = ++fileLoadSeq;
   const reader = new FileReader();
-  reader.onload = e => render(e.target.result, file.name);
+  reader.onload = e => { if (seq === fileLoadSeq) render(e.target.result, file.name); };
   reader.readAsText(file);
 }
 
 // ---- folder support (tree) ----
 function readDirRecursive(entry) {
-  return new Promise(resolve => {
-    if (entry.isFile) { entry.file(f => resolve([f])); return; }
+  return new Promise((resolve, reject) => {
+    if (entry.isFile) {
+      entry.file(f => resolve([f]), err => reject(err));
+      return;
+    }
     const reader = entry.createReader();
     const all = [];
     function readBatch() {
       reader.readEntries(entries => {
         if (entries.length) { all.push(...entries); readBatch(); return; }
-        Promise.all(all.map(e => readDirRecursive(e))).then(r => resolve(r.flat()));
-      });
+        Promise.all(all.map(e => readDirRecursive(e))).then(r => resolve(r.flat()), reject);
+      }, err => reject(err));
     }
     readBatch();
   });
@@ -668,14 +686,17 @@ function switchSidebarTab(tab) {
 }
 
 // ---- url fetch ----
+let urlLoadSeq = 0;
+
 function fetchUrl(url) {
   if (!url) return;
+  const seq = ++urlLoadSeq;
   document.getElementById('loading').classList.add('show');
   fetch(url)
     .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
-    .then(text => { render(text, url.split('/').pop() || url); closeUrl(); })
-    .catch(e => alert('获取失败: ' + e.message))
-    .finally(() => document.getElementById('loading').classList.remove('show'));
+    .then(text => { if (seq !== urlLoadSeq) return; const name = (url.split('/').pop() || url).split('?')[0].split('#')[0]; render(text, name); closeUrl(); })
+    .catch(e => { if (seq === urlLoadSeq) alert('获取失败: ' + e.message); })
+    .finally(() => { if (seq === urlLoadSeq) document.getElementById('loading').classList.remove('show'); });
 }
 
 // ---- sidebar toggle ----
@@ -714,6 +735,7 @@ function init() {
 
   // Drag and drop (binding only to outer element, one listener only)
   const dropzoneEl = document.getElementById('dropzone');
+  const content = document.getElementById('content');
   let dragCounter = 0;
   content.addEventListener('dragenter', e => {
     e.preventDefault();
@@ -731,7 +753,7 @@ function init() {
     const items = e.dataTransfer.items;
     const entry = items && items[0] && items[0].webkitGetAsEntry && items[0].webkitGetAsEntry();
     if (entry && entry.isDirectory) {
-      readDirRecursive(entry).then(files => { if (files.length) loadFolder(files); });
+      readDirRecursive(entry).then(files => { if (files.length) loadFolder(files); }).catch(() => alert('读取文件夹失败'));
     } else {
       const file = e.dataTransfer.files[0];
       if (file) loadFile(file);
@@ -828,9 +850,22 @@ function init() {
   // Keyboard shortcuts
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') { closeSettings(); closeUrl(); }
-    if ((e.key === 'o' || e.key === 'O') && (e.ctrlKey || e.metaKey)) {
+    const mod = e.ctrlKey || e.metaKey;
+    if ((e.key === 'o' || e.key === 'O') && mod && !e.shiftKey) {
       e.preventDefault();
       document.getElementById('fileInput').click();
+    }
+    if ((e.key === 'o' || e.key === 'O') && mod && e.shiftKey) {
+      e.preventDefault();
+      document.getElementById('folderInput').click();
+    }
+    if (e.key === 'b' && mod) {
+      e.preventDefault();
+      toggleSidebar();
+    }
+    if (e.key === 'u' && mod && !e.shiftKey) {
+      e.preventDefault();
+      openUrl();
     }
   });
 
