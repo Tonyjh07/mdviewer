@@ -466,7 +466,13 @@ function render(markdown, name) {
       html = html.replace(/\x00M_(\d+)\x00/g, (_, idx) => {
         const b = blocks[+idx];
         if (!b) return '';
-        try { return katex.renderToString(b.e, { displayMode: !!b.d, throwOnError: false }); }
+        try {
+          return katex.renderToString(b.e, {
+            displayMode: !!b.d,
+            throwOnError: false,
+            macros: { '\\cdotp': '\\cdot' }
+          });
+        }
         catch { return b.d ? `<div class="math-error">${b.e}</div>` : `<span class="math-error">${b.e}</span>`; }
       });
       contentBody.innerHTML = html;
