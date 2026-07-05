@@ -507,7 +507,7 @@ function rebuildToc(headings) {
     if (!h.id) return;
     const a = document.createElement('a');
     a.href = '#' + h.id;
-    a.textContent = h.textContent.replace(/^#\s*/, '').trim();
+    a.textContent = h.textContent.trim();
     a.className = 'toc-' + h.tagName.toLowerCase();
     a.addEventListener('click', e => {
       e.preventDefault();
@@ -529,27 +529,33 @@ function rebuildToc(headings) {
 }
 
 // ---- file loading ----
+let fileLoadSeq = 0;
+
 function loadFile(file) {
   if (!file || !file.name.match(/\.(md|markdown|mdown)$/i)) {
     alert('请选择 .md 文件');
     return;
   }
+  const seq = ++fileLoadSeq;
   const reader = new FileReader();
-  reader.onload = e => render(e.target.result, file.name);
+  reader.onload = e => { if (seq === fileLoadSeq) render(e.target.result, file.name); };
   reader.readAsText(file);
 }
 
 // ---- folder support (tree) ----
 function readDirRecursive(entry) {
-  return new Promise(resolve => {
-    if (entry.isFile) { entry.file(f => resolve([f])); return; }
+  return new Promise((resolve, reject) => {
+    if (entry.isFile) {
+      entry.file(f => resolve([f]), err => reject(err));
+      return;
+    }
     const reader = entry.createReader();
     const all = [];
     function readBatch() {
       reader.readEntries(entries => {
         if (entries.length) { all.push(...entries); readBatch(); return; }
-        Promise.all(all.map(e => readDirRecursive(e))).then(r => resolve(r.flat()));
-      });
+        Promise.all(all.map(e => readDirRecursive(e))).then(r => resolve(r.flat()), reject);
+      }, err => reject(err));
     }
     readBatch();
   });
@@ -668,14 +674,17 @@ function switchSidebarTab(tab) {
 }
 
 // ---- url fetch ----
+let urlLoadSeq = 0;
+
 function fetchUrl(url) {
   if (!url) return;
+  const seq = ++urlLoadSeq;
   document.getElementById('loading').classList.add('show');
   fetch(url)
     .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
-    .then(text => { render(text, url.split('/').pop() || url); closeUrl(); })
-    .catch(e => alert('获取失败: ' + e.message))
-    .finally(() => document.getElementById('loading').classList.remove('show'));
+    .then(text => { if (seq !== urlLoadSeq) return; const name = (url.split('/').pop() || url).split('?')[0].split('#')[0]; render(text, name); closeUrl(); })
+    .catch(e => { if (seq === urlLoadSeq) alert('获取失败: ' + e.message); })
+    .finally(() => { if (seq === urlLoadSeq) document.getElementById('loading').classList.remove('show'); });
 }
 
 // ---- sidebar toggle ----
@@ -714,6 +723,7 @@ function init() {
 
   // Drag and drop (binding only to outer element, one listener only)
   const dropzoneEl = document.getElementById('dropzone');
+  const content = document.getElementById('content');
   let dragCounter = 0;
   content.addEventListener('dragenter', e => {
     e.preventDefault();
@@ -731,7 +741,7 @@ function init() {
     const items = e.dataTransfer.items;
     const entry = items && items[0] && items[0].webkitGetAsEntry && items[0].webkitGetAsEntry();
     if (entry && entry.isDirectory) {
-      readDirRecursive(entry).then(files => { if (files.length) loadFolder(files); });
+      readDirRecursive(entry).then(files => { if (files.length) loadFolder(files); }).catch(() => alert('读取文件夹失败'));
     } else {
       const file = e.dataTransfer.files[0];
       if (file) loadFile(file);
