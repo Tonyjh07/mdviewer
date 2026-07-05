@@ -467,7 +467,7 @@ function render(markdown, name) {
         const b = blocks[+idx];
         if (!b) return '';
         try {
-          const latex = b.e.replace(/\u00B7/g, '{\\cdot}');
+          const latex = b.e.replace(/\u00B7/g, '\\textperiodcentered ');
           return katex.renderToString(latex, {
             displayMode: !!b.d,
             throwOnError: false,
