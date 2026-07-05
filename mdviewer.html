@@ -467,7 +467,8 @@ function render(markdown, name) {
         const b = blocks[+idx];
         if (!b) return '';
         try {
-          return katex.renderToString(b.e, {
+          const latex = b.e.replace(/\u00B7/g, '{\\cdot}');
+          return katex.renderToString(latex, {
             displayMode: !!b.d,
             throwOnError: false,
             macros: { '\\cdotp': '\\cdot' }
