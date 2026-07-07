@@ -598,10 +598,13 @@ function loadFile(file) {
 }
 
 // ---- folder support (tree) ----
-function readDirRecursive(entry) {
+function readDirRecursive(entry, basePath, isRoot) {
   return new Promise((resolve, reject) => {
     if (entry.isFile) {
-      entry.file(f => resolve([f]), err => reject(err));
+      entry.file(f => {
+        const relPath = basePath ? basePath + '/' + entry.name : entry.name;
+        resolve([{ file: f, relPath }]);
+      }, err => reject(err));
       return;
     }
     const reader = entry.createReader();
@@ -609,7 +612,8 @@ function readDirRecursive(entry) {
     function readBatch() {
       reader.readEntries(entries => {
         if (entries.length) { all.push(...entries); readBatch(); return; }
-        Promise.all(all.map(e => readDirRecursive(e))).then(r => resolve(r.flat()), reject);
+        const prefix = isRoot ? '' : (basePath ? basePath + '/' + entry.name : entry.name);
+        Promise.all(all.map(e => readDirRecursive(e, prefix, false))).then(r => resolve(r.flat()), reject);
       }, err => reject(err));
     }
     readBatch();
@@ -619,8 +623,10 @@ function readDirRecursive(entry) {
 function loadFolder(files) {
   const mdFiles = [];
   for (const f of files) {
-    if (f.name.match(/\.(md|markdown|mdown)$/i)) {
-      mdFiles.push({ file: f, name: f.name, relPath: f.webkitRelativePath || f.name });
+    const file = f.file || f;
+    const relPath = f.relPath || file.webkitRelativePath || file.name;
+    if (file.name.match(/\.(md|markdown|mdown)$/i)) {
+      mdFiles.push({ file, name: file.name, relPath });
     }
   }
   if (!mdFiles.length) { alert('文件夹中未找到 .md 文件'); return; }
@@ -793,13 +799,17 @@ function init() {
     e.preventDefault();
     dragCounter = 0;
     dropzoneEl.classList.remove('drag-over');
-    const items = e.dataTransfer.items;
-    const entry = items && items[0] && items[0].webkitGetAsEntry && items[0].webkitGetAsEntry();
+    const dt = e.dataTransfer;
+    const droppedFiles = Array.from(dt.files);
+    const entry = dt.items && dt.items[0] && dt.items[0].webkitGetAsEntry && dt.items[0].webkitGetAsEntry();
     if (entry && entry.isDirectory) {
-      readDirRecursive(entry).then(files => { if (files.length) loadFolder(files); }).catch(() => alert('读取文件夹失败'));
+      readDirRecursive(entry, '', true).then(files => {
+        if (files.length) loadFolder(files);
+      }).catch(() => {
+        if (droppedFiles.length) loadFolder(droppedFiles);
+      });
     } else {
-      const file = e.dataTransfer.files[0];
-      if (file) loadFile(file);
+      if (droppedFiles[0]) loadFile(droppedFiles[0]);
     }
   });
 
