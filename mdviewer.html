@@ -171,6 +171,7 @@ input[type="range"] { width: 100%; margin: 4px 0; accent-color: var(--btn-primar
 }
 /* hljs overrides */
 #content-inner pre code.hljs { background: inherit; }
+#content-inner .mermaid { margin: 1em 0; overflow-x: auto; text-align: center; }
 </style>
 </head>
 <body>
@@ -305,6 +306,7 @@ input[type="range"] { width: 100%; margin: 4px 0; accent-color: var(--btn-primar
 <script src="https://cdn.jsdelivr.net/npm/marked@15.0.12/marked.min.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.16.0/dist/mermaid.min.js" crossorigin="anonymous"></script>
 <script>
 const $ = (s, ctx) => (ctx || document).querySelector(s);
 const $$ = (s, ctx) => Array.from((ctx || document).querySelectorAll(s));
@@ -521,8 +523,21 @@ function render(markdown, name) {
       document.getElementById('fileName').textContent = name || '';
 
       contentBody.querySelectorAll('pre code').forEach(block => {
+        if (block.classList.contains('language-mermaid')) return;
         hljs.highlightElement(block);
       });
+
+      if (typeof mermaid !== 'undefined') {
+        contentBody.querySelectorAll('pre code.language-mermaid').forEach(block => {
+          const code = block.textContent;
+          const pre = block.parentElement;
+          const div = document.createElement('div');
+          div.className = 'mermaid';
+          div.textContent = code;
+          pre.parentElement.replaceChild(div, pre);
+        });
+        try { mermaid.run({ querySelector: '.mermaid' }); } catch (e) { console.warn('mermaid error:', e); }
+      }
 
       addHeadingAnchors();
       rebuildToc(headingsList());
@@ -928,6 +943,9 @@ function init() {
   });
 
   applySettings();
+  if (typeof mermaid !== 'undefined') {
+    mermaid.initialize({ startOnLoad: false });
+  }
 }
 
 document.addEventListener('DOMContentLoaded', init);
