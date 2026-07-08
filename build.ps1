@@ -35,17 +35,7 @@ $env:Path = $env:Path + ";$env:USERPROFILE\.cargo\bin"
 
 Push-Location $src
 try {
-    cargo tauri build 2>&1 | ForEach-Object {
-        if ($_ -match "error|Error") {
-            Write-Host $_ -ForegroundColor Red
-        } elseif ($_ -match "Finished|bundle at|Bundle at|Running makensis") {
-            Write-Host $_ -ForegroundColor Green
-        } elseif ($_ -match "warning|Warning|Info") {
-            Write-Host $_ -ForegroundColor Yellow
-        } else {
-            Write-Host $_
-        }
-    }
+    cargo tauri build
     if ($LASTEXITCODE -ne 0) { throw "Build failed (exit code: $LASTEXITCODE)" }
 } finally {
     Pop-Location
