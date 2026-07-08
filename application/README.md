@@ -33,17 +33,18 @@ cargo tauri build
 
 ## 更新前端
 
-`application/index.html` 是 `mdviewer.html` 的副本。每当根目录的 `mdviewer.html` 更新后，需同步：
+`application/frontend/index.html` 是 `mdviewer.html` 的副本。每当根目录的 `mdviewer.html` 更新后，需同步：
 
 ```sh
-cp ../mdviewer.html index.html
+cp ../mdviewer.html frontend/index.html
 ```
 
 ## 项目结构
 
 ```
 application/
-├── index.html         # 前端页面（mdviewer.html 副本）
+├── frontend/
+│   └── index.html     # 前端页面（mdviewer.html 副本）
 └── src-tauri/
     ├── Cargo.toml     # Rust 依赖
     ├── tauri.conf.json # Tauri 配置（窗口大小、标题等）
