@@ -1,6 +1,6 @@
 # mdviewer
 
-一个单文件的 Markdown 阅读器，零依赖、双击即用。支持多种 Markdown 语法扩展、LaTeX 公式渲染、代码高亮、主题切换与目录导航。
+一个单文件的 Markdown 阅读器，零构建、双击即用。支持 LaTeX 公式渲染、代码高亮、Mermaid 图表、主题切换与目录导航。可选 Tauri 桌面应用包装。
 
 ## 快速开始
 
@@ -10,7 +10,7 @@
 
 ### 打开文件
 - 点击工具栏 **「打开」** 按钮选择 `.md` 文件
-- 或直接将文件拖入窗口
+- 或将文件/文件夹拖入窗口
 - 快捷键 `Ctrl+O`（macOS: `Cmd+O`）
 
 ### 打开文件夹
@@ -63,54 +63,93 @@
 | `\(...\)` | 行内 | `\( \vec{F} = m\vec{a} \)` |
 | `\[...\]` | 独占 | `\[ \int_a^b f(x)\,dx \]` |
 
-> 注意：`$` 后跟空白（如 `$ x^2 $`）也能正常识别，但会被视为行内公式。
+> `$` 后跟空白（如 `$ x^2 $`）也能正常识别，但会被视为行内公式。
+
+### Mermaid 图表
+- ```` ```mermaid ```` 代码块自动渲染为 Mermaid 图表
+- 支持流程图、时序图、甘特图、类图等
 
 ### 其他渲染特性
 - 标题自动生成锚点，鼠标悬停显示 `#` 链接
 - 链接默认在新标签页打开（`target="_blank"`）
-- 代码块圆角阴影，独立于主题
+- 代码块圆角阴影
 - 打印时自动隐藏工具栏和侧栏
+
+## 桌面应用 (Tauri)
+
+`application/` 目录包含 Tauri v2 桌面包装，支持 Windows / macOS / Linux。
+
+### 开发
+
+```sh
+cd application/src-tauri
+cargo tauri dev
+```
+
+### 构建安装包
+
+```sh
+cd application/src-tauri
+cargo tauri build
+```
+
+Windows 下生成 NSIS 安装包（`.exe`），位于 `target/release/bundle/nsis/`。
+
+### 更新前端
+
+`application/frontend/index.html` 是 `mdviewer.html` 的副本，改动后需同步：
+
+```sh
+cp mdviewer.html application/frontend/index.html
+```
+
+## 技术栈
+
+全部由 CDN 引入，单文件内联，无打包构建步骤。
+
+| 库 | 用途 | 版本（锁定） |
+|----|------|-------------|
+| [marked](https://marked.js.org/) | Markdown 解析 | 15.0.12 |
+| [KaTeX](https://katex.org/) | LaTeX 公式渲染 | 0.16.11 |
+| [highlight.js](https://highlightjs.org/) | 代码语法高亮 | 11.9.0 |
+| [Mermaid](https://mermaid.js.org/) | 图表渲染 | 11.16.0 |
 
 ## 界面布局
 
 ```
 ┌──────────────────────────────────────┐
-│  mdviewer          [打开] [文件夹] ... │ ← 顶栏（滚动时可隐藏，上滑恢复）
+│  mdviewer     [打开] [文件夹] [URL] … │ ← 顶栏（滚动时可隐藏，上滑恢复）
 ├────────┬─────────────────────────────┤
 │        │                             │
 │ 侧栏   │       Markdown 内容         │
 │ 文件   │       (居中阅读区域)         │
 │ 目录   │                             │
 │        │                             │
-├────────┴─────────────────────────────┤
-│             状态指示                  │
-└──────────────────────────────────────┘
+└────────┴─────────────────────────────┘
 ```
 
-- 侧栏：`position: sticky; top: 0; height: 100vh`，不跟随主内容滚动，独立滑动
-- 顶栏：上滑时滑入，下滑时滑出，支持「永不隐藏」选项
+- 侧栏：`position: sticky; top: 0; height: 100vh`，独立滑动
+- 顶栏：上滑滑入，下滑滑出，支持「永不隐藏」选项
 - 内容区：居中，最大宽度可调
-
-## 技术栈
-
-全部由 CDN 引入，单文件内联，无打包构建步骤。
-
-| 库 | 用途 | 链接 |
-|----|------|------|
-| [marked](https://marked.js.org/) | Markdown 解析 | `marked/marked.min.js` |
-| [KaTeX](https://katex.org/) | LaTeX 公式渲染 | `katex@0.16.11` |
-| [highlight.js](https://highlightjs.org/) | 代码语法高亮 | `highlightjs/cdn-release@11.9.0` |
 
 ## 兼容性
 
-支持所有现代浏览器（Chrome、Edge、Firefox、Safari）。文件夹打开/拖放功能依赖 File System Access API，在 Chrome/Edge 下体验最佳。
+支持所有现代浏览器（Chrome、Edge、Firefox、Safari）。文件夹拖放功能在 Chrome/Edge (WebView2) 下体验最佳。
 
 ## 文件结构
 
 ```
 mdviewer/
-├── mdviewer.html    # 单文件应用（所有 CSS/JS 内联）
-└── README.md        # 本文件
+├── mdviewer.html                    # 单文件应用（所有 CSS/JS 内联）
+├── application/                     # Tauri 桌面应用包装
+│   ├── frontend/index.html          # 前端页面（mdviewer.html 副本）
+│   └── src-tauri/                   # Rust + Tauri 源码
+│       ├── Cargo.toml
+│       ├── tauri.conf.json
+│       ├── icons/                   # 应用图标
+│       ├── capabilities/            # 权限配置
+│       └── src/                     # Rust 入口
+└── README.md                        # 本文件
 ```
 
 ## License
