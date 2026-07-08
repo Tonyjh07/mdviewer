@@ -46,8 +46,35 @@ $installer = Get-ChildItem -Path $nsisDir -Filter "*.exe" | Select-Object -First
 if ($installer) {
     Write-Host ""
     Write-Host "============================================" -ForegroundColor Cyan
-    Write-Host "  Build succeeded: $($installer.Name)" -ForegroundColor Green
+    Write-Host "  NSIS: $($installer.Name)" -ForegroundColor Green
     Write-Host "  Version: v$newVer" -ForegroundColor Green
     Write-Host "  Size: $("{0:N1}" -f ($installer.Length / 1MB)) MB" -ForegroundColor Green
     Write-Host "============================================" -ForegroundColor Cyan
+}
+
+# MSI via WiX v7
+$wixDir = "C:\Program Files\WiX Toolset v7.0\bin"
+$wix = [System.IO.Path]::Combine($wixDir, "wix.exe")
+$wxs = [System.IO.Path]::Combine($root, "application", "mdviewer.wxs")
+$msiOut = [System.IO.Path]::Combine($src, "target", "release", "bundle", "msi", "mdviewer_$newVer" + "_x64.msi")
+if (Test-Path $wix) {
+    Write-Host "==> Building MSI with WiX v7 ..." -ForegroundColor Cyan
+    $env:Path = "$wixDir;" + $env:Path
+    $msiDir = [System.IO.Path]::GetDirectoryName($msiOut)
+    New-Item -ItemType Directory -Path $msiDir -Force | Out-Null
+    Push-Location (Join-Path $root "application")
+    try {
+        & $wix build $wxs -d Version="$newVer" -o $msiOut -arch x64
+        if ($LASTEXITCODE -eq 0) {
+            $msiFile = Get-Item -LiteralPath $msiOut
+            Write-Host "  MSI: $($msiFile.Name)" -ForegroundColor Green
+            Write-Host "  Size: $("{0:N1}" -f ($msiFile.Length / 1MB)) MB" -ForegroundColor Green
+        } else {
+            Write-Host "  MSI build failed (exit code: $LASTEXITCODE)" -ForegroundColor Red
+        }
+    } finally {
+        Pop-Location
+    }
+} else {
+    Write-Host "==> Skipping MSI: WiX v7 not found at $wixDir" -ForegroundColor Yellow
 }
