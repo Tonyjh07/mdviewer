@@ -88,6 +88,14 @@ cargo tauri dev
 
 ### 构建安装包
 
+项目根目录一键构建（自动升级版本号 + 同步前端 + 编译）：
+
+```sh
+.\build.ps1
+```
+
+或手动分步执行：
+
 ```sh
 cd application/src-tauri
 cargo tauri build
@@ -140,6 +148,7 @@ cp mdviewer.html application/frontend/index.html
 
 ```
 mdviewer/
+├── build.ps1                        # 一键构建脚本（Windows）
 ├── mdviewer.html                    # 单文件应用（所有 CSS/JS 内联）
 ├── application/                     # Tauri 桌面应用包装
 │   ├── frontend/index.html          # 前端页面（mdviewer.html 副本）
