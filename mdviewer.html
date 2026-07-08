@@ -950,6 +950,13 @@ function init() {
   if (typeof mermaid !== 'undefined') {
     mermaid.initialize({ startOnLoad: false });
   }
+
+  // Tauri desktop: read file passed via command-line arg (file association)
+  if (window.__TAURI__) {
+    window.__TAURI__.core.invoke('get_initial_file').then(data => {
+      if (data) render(data.content, data.name);
+    }).catch(() => {});
+  }
 }
 
 document.addEventListener('DOMContentLoaded', init);
