@@ -956,6 +956,14 @@ function init() {
     window.__TAURI__.core.invoke('get_initial_file').then(data => {
       if (data) render(data.content, data.name);
     }).catch(() => {});
+    // External links → open in default browser
+    document.getElementById('content-body').addEventListener('click', e => {
+      const link = e.target.closest('a');
+      if (link && link.href && /^https?:\/\//i.test(link.href)) {
+        e.preventDefault();
+        window.__TAURI__.opener.openUrl(link.href);
+      }
+    });
   }
 }
 
