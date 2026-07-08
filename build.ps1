@@ -1,4 +1,4 @@
-﻿﻿$ErrorActionPreference = "Stop"
+﻿$ErrorActionPreference = "Stop"
 
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $src = [System.IO.Path]::Combine($root, "application", "src-tauri")
