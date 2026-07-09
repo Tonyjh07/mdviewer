@@ -925,11 +925,13 @@ let urlLoadSeq = 0;
 
 function fetchUrl(url) {
   if (!url) return;
+  // GitHub blob → raw.githubusercontent.com
+  url = url.replace(/^https?:\/\/(?:www\.)?github\.com\/([^/]+\/[^/]+)\/blob\//i, 'https://raw.githubusercontent.com/$1/');
   const seq = ++urlLoadSeq;
   document.getElementById('loading').classList.add('show');
   fetch(url)
     .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
-    .then(text => { if (seq !== urlLoadSeq) return; const name = (url.split('/').pop() || url).split('?')[0].split('#')[0]; render(text, name); closeUrl(); saveSession({ type: 'url', url, name }); })
+    .then(text => { if (seq !== urlLoadSeq) return; let name = (url.split('/').pop() || url).split('?')[0].split('#')[0]; try { name = decodeURIComponent(name); } catch {} render(text, name); closeUrl(); saveSession({ type: 'url', url, name }); })
     .catch(e => { if (seq === urlLoadSeq) alert('获取失败: ' + e.message); })
     .finally(() => { if (seq === urlLoadSeq) document.getElementById('loading').classList.remove('show'); });
 }
@@ -1265,6 +1267,9 @@ if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Me
       fetchUrl(session.url);
     }
   }
+  // URL query parameter: ?url=... (优先级高于会话)
+  const qUrl = new URLSearchParams(location.search).get('url');
+  if (qUrl) setTimeout(() => fetchUrl(qUrl), 0);
 }
 
 document.addEventListener('DOMContentLoaded', init);

@@ -1,6 +1,6 @@
 {
   "productName": "mdviewer",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "identifier": "com.mdviewer.desktop",
   "build": {
     "frontendDist": "../frontend"
