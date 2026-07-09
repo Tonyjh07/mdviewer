@@ -77,6 +77,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helv
 .shortcut-row .shortcut-btn { background: var(--btn-bg); border: 1px solid var(--border); border-radius: 4px; padding: 2px 10px; font-size: 12px; font-family: inherit; color: var(--text); cursor: pointer; min-width: 100px; text-align: center; transition: background .12s; outline: none; font-family: monospace; }
 .shortcut-row .shortcut-btn:hover { background: var(--btn-hover); }
 .shortcut-row .shortcut-btn.capturing { background: var(--btn-primary); color: #fff; border-color: var(--btn-primary); }
+.shortcut-reset { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 11px; padding: 0 4px; text-decoration: underline; font-family: inherit; outline: none; }
+.shortcut-reset:hover { color: var(--link); }
 /* content */
 #content { flex: 1; min-width: 0; padding: 40px 24px; display: flex; justify-content: center; }
 #content-inner { max-width: var(--content-width); width: 100%; min-height: 200px; }
@@ -363,6 +365,9 @@ function saveSettings() {
 
 // ---- session persistence (last opened file) ----
 function saveSession(data) {
+  data.sidebarVisible = sidebarVisible;
+  const activeTabEl = document.querySelector('.sidebar-tab.active');
+  data.activeTab = activeTabEl ? activeTabEl.dataset.panel : 'toc';
   try { localStorage.setItem('mdviewer-session', JSON.stringify(data)); } catch {}
 }
 function loadSession() {
@@ -370,6 +375,18 @@ function loadSession() {
 }
 function clearSession() {
   try { localStorage.removeItem('mdviewer-session'); } catch {}
+}
+function restoreSidebarSession(session) {
+  if (!session) return;
+  if (session.sidebarVisible) {
+    sidebarVisible = true;
+    document.getElementById('sidebar').classList.add('open');
+    document.getElementById('sidebarBtn').classList.add('active');
+  }
+  if (session.activeTab) {
+    $$('.sidebar-tab').forEach(b => b.classList.toggle('active', b.dataset.panel === session.activeTab));
+    $$('.sidebar-panel').forEach(p => p.classList.toggle('active', p.id.replace('Panel','') === session.activeTab));
+  }
 }
 
 // ---- keyboard shortcuts ----
@@ -466,6 +483,11 @@ function applyCodeTheme(mode) {
     : 'https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/stackoverflow-light.min.css';
 }
 
+function resetShortcut(id) {
+  if (state.settings.shortcuts) delete state.settings.shortcuts[id];
+  saveSettings();
+  renderShortcutList();
+}
 function renderShortcutList() {
   const container = document.getElementById('shortcutList');
   if (!container) return;
@@ -473,7 +495,9 @@ function renderShortcutList() {
   container.innerHTML = SHORTCUT_ACTIONS.map(a => {
     const s = shortcuts[a.id];
     const display = s ? shortcutDisplay(s) : a.default;
-    return `<div class="shortcut-row"><span>${a.label}</span><button class="shortcut-btn" data-action="${a.id}">${display}</button></div>`;
+    const isCustom = state.settings.shortcuts && a.id in state.settings.shortcuts;
+    const resetBtn = isCustom ? `<button class="shortcut-reset" data-action="${a.id}">重置</button>` : '';
+    return `<div class="shortcut-row"><span>${a.label}</span><div style="display:flex;gap:4px;align-items:center">${resetBtn}<button class="shortcut-btn" data-action="${a.id}">${display}</button></div></div>`;
   }).join('');
   container.querySelectorAll('.shortcut-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -482,6 +506,9 @@ function renderShortcutList() {
       const el = container.querySelector(`[data-action="${capturingShortcut}"]`);
       if (el) { el.textContent = '按下按键...'; el.classList.add('capturing'); }
     });
+  });
+  container.querySelectorAll('.shortcut-reset').forEach(btn => {
+    btn.addEventListener('click', () => resetShortcut(btn.dataset.action));
   });
 }
 
@@ -858,6 +885,7 @@ function loadFolderFileByRel(relPath) {
 function switchSidebarTab(tab) {
   $$('.sidebar-tab').forEach(b => b.classList.toggle('active', b.dataset.panel === tab));
   $$('.sidebar-panel').forEach(p => p.classList.toggle('active', p.id.replace('Panel','') === tab));
+  saveSession(loadSession() || {});
 }
 
 // ---- url fetch ----
@@ -892,6 +920,7 @@ function toggleSidebar() {
   sidebarVisible = !sidebarVisible;
   document.getElementById('sidebar').classList.toggle('open', sidebarVisible);
   document.getElementById('sidebarBtn').classList.toggle('active', sidebarVisible);
+  saveSession(loadSession() || {});
 }
 
 // ---- settings panel ----
@@ -1052,13 +1081,21 @@ function init() {
     if (capturingShortcut) {
       e.preventDefault();
       if (e.key === 'Escape') { capturingShortcut = null; renderShortcutList(); return; }
-      if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Meta') return;
-      if (!state.settings.shortcuts) state.settings.shortcuts = {};
-      state.settings.shortcuts[capturingShortcut] = { key: e.key, ctrl: e.ctrlKey, shift: e.shiftKey, meta: e.metaKey, alt: e.altKey };
-      capturingShortcut = null;
-      saveSettings();
-      renderShortcutList();
-      return;
+if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Meta') return;
+          const cap = capturingShortcut;
+          const newS = { key: e.key, ctrl: e.ctrlKey, shift: e.shiftKey, meta: e.metaKey, alt: e.altKey };
+          const defS = DEFAULT_SHORTCUTS[cap];
+          const isDefault = defS && Object.keys(defS).every(k => defS[k] === newS[k]);
+          capturingShortcut = null;
+          if (isDefault) {
+            if (state.settings.shortcuts) delete state.settings.shortcuts[cap];
+          } else {
+            if (!state.settings.shortcuts) state.settings.shortcuts = {};
+            state.settings.shortcuts[cap] = newS;
+          }
+          saveSettings();
+          renderShortcutList();
+          return;
     }
     const shortcuts = getShortcuts();
     for (const [action, s] of Object.entries(shortcuts)) {
@@ -1086,9 +1123,28 @@ function init() {
 
   // Tauri desktop: read file passed via command-line arg (file association)
   if (window.__TAURI__) {
+    function restoreTauriSession() {
+      const session = loadSession();
+      restoreSidebarSession(session);
+      if (session && session.type === 'tauri' && session.path) {
+        window.__TAURI__.core.invoke('read_file', { path: session.path }).then(d => {
+          if (d) { render(d.content, d.name); saveSession({ type: 'tauri', name: d.name, path: d.path }); }
+        }).catch(() => clearSession());
+      }
+    }
     window.__TAURI__.core.invoke('get_initial_file').then(data => {
-      if (data) { render(data.content, data.name); saveSession({ type: 'tauri', name: data.name }); }
-    }).catch(() => {});
+      if (data) {
+        render(data.content, data.name);
+        saveSession({ type: 'tauri', name: data.name, path: data.path });
+      }
+      const session = loadSession();
+      restoreSidebarSession(session);
+      if (!data && session && session.type === 'tauri' && session.path) {
+        window.__TAURI__.core.invoke('read_file', { path: session.path }).then(d => {
+          if (d) { render(d.content, d.name); saveSession({ type: 'tauri', name: d.name, path: d.path }); }
+        }).catch(() => clearSession());
+      }
+    }).catch(() => restoreTauriSession());
     // External links → open in default browser
     document.getElementById('content-body').addEventListener('click', e => {
       const link = e.target.closest('a');
@@ -1097,13 +1153,12 @@ function init() {
         window.__TAURI__.opener.openUrl(link.href);
       }
     });
-  }
-
-  // Restore last session (only URL, folder/files can't persist)
-  const session = loadSession();
-  if (session && session.type === 'url' && !window.__TAURI__) {
-    // Only auto-restore if not on Tauri (Tauri handles its own session via CLI)
-    fetchUrl(session.url);
+  } else {
+    const session = loadSession();
+    restoreSidebarSession(session);
+    if (session && session.type === 'url') {
+      fetchUrl(session.url);
+    }
   }
 }
 
