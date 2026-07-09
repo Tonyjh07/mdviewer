@@ -71,6 +71,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helv
 #tocPanel a.active { color: var(--toc-active); border-left-color: var(--toc-active); font-weight: 500; }
 #tocPanel .toc-h2 { padding-left: 32px; font-size: calc(var(--sidebar-font-size, 13px) - 0.5px); }
 #tocPanel .toc-h3 { padding-left: 48px; font-size: calc(var(--sidebar-font-size, 13px) - 1px); }
+/* shortcut list */
+.shortcut-list { display: flex; flex-direction: column; gap: 4px; }
+.shortcut-row { display: flex; align-items: center; justify-content: space-between; padding: 3px 0; font-size: 13px; }
+.shortcut-row .shortcut-btn { background: var(--btn-bg); border: 1px solid var(--border); border-radius: 4px; padding: 2px 10px; font-size: 12px; font-family: inherit; color: var(--text); cursor: pointer; min-width: 100px; text-align: center; transition: background .12s; outline: none; font-family: monospace; }
+.shortcut-row .shortcut-btn:hover { background: var(--btn-hover); }
+.shortcut-row .shortcut-btn.capturing { background: var(--btn-primary); color: #fff; border-color: var(--btn-primary); }
 /* content */
 #content { flex: 1; min-width: 0; padding: 40px 24px; display: flex; justify-content: center; }
 #content-inner { max-width: var(--content-width); width: 100%; min-height: 200px; }
@@ -260,7 +266,7 @@ input[type="range"] { width: 100%; margin: 4px 0; accent-color: var(--btn-primar
       </div>
       <div class="setting-group">
         <label>字号 <span class="value" id="fontSizeValue">16px</span></label>
-        <input type="range" id="fontSizeRange" min="12" max="36" value="16" step="1">
+        <input type="range" id="fontSizeRange" min="12" max="48" value="16" step="1">
       </div>
       <div class="setting-group">
         <label>行高 <span class="value" id="lineHeightValue">1.75</span></label>
@@ -286,6 +292,10 @@ input[type="range"] { width: 100%; margin: 4px 0; accent-color: var(--btn-primar
       <div class="setting-group">
         <label>侧栏字号 <span class="value" id="sidebarFontSizeValue">13px</span></label>
         <input type="range" id="sidebarFontSizeRange" min="10" max="24" value="13" step="1">
+      </div>
+      <div class="setting-group" style="border-top:1px solid var(--border);padding-top:14px;">
+        <label>快捷键（点击修改）</label>
+        <div class="shortcut-list" id="shortcutList"></div>
       </div>
       <div class="setting-group" style="border-top:1px solid var(--border);padding-top:14px;">
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:13px;">
@@ -362,6 +372,46 @@ function clearSession() {
   try { localStorage.removeItem('mdviewer-session'); } catch {}
 }
 
+// ---- keyboard shortcuts ----
+const SHORTCUT_ACTIONS = [
+  { id: 'openFile', label: '打开文件', default: 'Ctrl+O' },
+  { id: 'openFolder', label: '打开文件夹', default: 'Ctrl+Shift+O' },
+  { id: 'toggleSidebar', label: '切换侧栏', default: 'Ctrl+B' },
+  { id: 'openUrl', label: '打开 URL', default: 'Ctrl+U' },
+  { id: 'openSettings', label: '打开选项', default: 'Ctrl+,' },
+  { id: 'increaseFontSize', label: '增大字号', default: 'Ctrl+=' },
+  { id: 'decreaseFontSize', label: '减小字号', default: 'Ctrl+-' },
+  { id: 'closePanels', label: '关闭面板', default: 'Esc' },
+];
+const DEFAULT_SHORTCUTS = {
+  openFile: { key: 'o', ctrl: true, shift: false, meta: false, alt: false },
+  openFolder: { key: 'o', ctrl: true, shift: true, meta: false, alt: false },
+  toggleSidebar: { key: 'b', ctrl: true, shift: false, meta: false, alt: false },
+  openUrl: { key: 'u', ctrl: true, shift: false, meta: false, alt: false },
+  openSettings: { key: ',', ctrl: true, shift: false, meta: false, alt: false },
+  increaseFontSize: { key: '=', ctrl: true, shift: false, meta: false, alt: false },
+  decreaseFontSize: { key: '-', ctrl: true, shift: false, meta: false, alt: false },
+  closePanels: { key: 'Escape', ctrl: false, shift: false, meta: false, alt: false },
+};
+function getShortcuts() {
+  return { ...DEFAULT_SHORTCUTS, ...(state.settings.shortcuts || {}) };
+}
+function shortcutDisplay(s) {
+  const parts = [];
+  if (s.ctrl) parts.push('Ctrl');
+  if (s.meta) parts.push('Cmd');
+  if (s.alt) parts.push('Alt');
+  if (s.shift) parts.push('Shift');
+  const k = s.key === ',' ? ',' : s.key === '-' ? '-' : s.key === '=' ? '=' : s.key === 'Escape' ? 'Esc' : s.key.toUpperCase();
+  parts.push(k);
+  return parts.join('+');
+}
+function shortcutMatch(e, s) {
+  return e.key.toLowerCase() === s.key.toLowerCase() &&
+    e.ctrlKey === !!s.ctrl && e.metaKey === !!s.meta &&
+    e.shiftKey === !!s.shift && e.altKey === !!s.alt;
+}
+
 // ---- theme application ----
 function applySettings() {
   const s = state.settings;
@@ -416,6 +466,25 @@ function applyCodeTheme(mode) {
     : 'https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/stackoverflow-light.min.css';
 }
 
+function renderShortcutList() {
+  const container = document.getElementById('shortcutList');
+  if (!container) return;
+  const shortcuts = getShortcuts();
+  container.innerHTML = SHORTCUT_ACTIONS.map(a => {
+    const s = shortcuts[a.id];
+    const display = s ? shortcutDisplay(s) : a.default;
+    return `<div class="shortcut-row"><span>${a.label}</span><button class="shortcut-btn" data-action="${a.id}">${display}</button></div>`;
+  }).join('');
+  container.querySelectorAll('.shortcut-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      capturingShortcut = btn.dataset.action;
+      renderShortcutList();
+      const el = container.querySelector(`[data-action="${capturingShortcut}"]`);
+      if (el) { el.textContent = '按下按键...'; el.classList.add('capturing'); }
+    });
+  });
+}
+
 function syncSettingUI() {
   const s = state.settings;
   const theme = s.theme || 'light';
@@ -433,6 +502,7 @@ function syncSettingUI() {
   document.getElementById('sidebarFontSizeValue').textContent = (s.sidebarFontSize || 13) + 'px';
   document.getElementById('alwaysToolbarCb').checked = !!s.alwaysShowToolbar;
   document.getElementById('swapTabsCb').checked = !!s.swapSidebarTabs;
+  renderShortcutList();
 }
 
 function syncCustomColorInputs() {
@@ -804,6 +874,18 @@ function fetchUrl(url) {
     .finally(() => { if (seq === urlLoadSeq) document.getElementById('loading').classList.remove('show'); });
 }
 
+// ---- font size adjustment ----
+function adjustFontSize(delta) {
+  const s = state.settings;
+  const current = s.fontSize || 16;
+  const max = +(document.getElementById('fontSizeRange').max || 48);
+  const min = +(document.getElementById('fontSizeRange').min || 12);
+  const next = Math.max(min, Math.min(max, current + delta));
+  if (next !== current) { s.fontSize = next; saveSettings(); applySettings(); }
+}
+
+let capturingShortcut = null;
+
 // ---- sidebar toggle ----
 let sidebarVisible = false;
 function toggleSidebar() {
@@ -814,7 +896,7 @@ function toggleSidebar() {
 
 // ---- settings panel ----
 function openSettings() { document.getElementById('settingsOverlay').classList.add('open'); }
-function closeSettings() { document.getElementById('settingsOverlay').classList.remove('open'); }
+function closeSettings() { document.getElementById('settingsOverlay').classList.remove('open'); capturingShortcut = null; }
 function openUrl() {
   document.getElementById('urlOverlay').classList.add('open');
   document.getElementById('urlInput').value = '';
@@ -964,25 +1046,36 @@ function init() {
     lastScrollY = sy;
   }, { passive: true });
 
-  // Keyboard shortcuts
+  // Keyboard shortcuts (configurable via settings)
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') { closeSettings(); closeUrl(); }
-    const mod = e.ctrlKey || e.metaKey;
-    if ((e.key === 'o' || e.key === 'O') && mod && !e.shiftKey) {
+    // If capturing a shortcut in settings, handle that first
+    if (capturingShortcut) {
       e.preventDefault();
-      document.getElementById('fileInput').click();
+      if (e.key === 'Escape') { capturingShortcut = null; renderShortcutList(); return; }
+      if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Meta') return;
+      if (!state.settings.shortcuts) state.settings.shortcuts = {};
+      state.settings.shortcuts[capturingShortcut] = { key: e.key, ctrl: e.ctrlKey, shift: e.shiftKey, meta: e.metaKey, alt: e.altKey };
+      capturingShortcut = null;
+      saveSettings();
+      renderShortcutList();
+      return;
     }
-    if ((e.key === 'o' || e.key === 'O') && mod && e.shiftKey) {
-      e.preventDefault();
-      document.getElementById('folderInput').click();
-    }
-    if (e.key === 'b' && mod) {
-      e.preventDefault();
-      toggleSidebar();
-    }
-    if (e.key === 'u' && mod && !e.shiftKey) {
-      e.preventDefault();
-      openUrl();
+    const shortcuts = getShortcuts();
+    for (const [action, s] of Object.entries(shortcuts)) {
+      if (shortcutMatch(e, s)) {
+        e.preventDefault();
+        switch (action) {
+          case 'openFile': document.getElementById('fileInput').click(); break;
+          case 'openFolder': document.getElementById('folderInput').click(); break;
+          case 'toggleSidebar': toggleSidebar(); break;
+          case 'openUrl': openUrl(); break;
+          case 'openSettings': openSettings(); break;
+          case 'increaseFontSize': adjustFontSize(1); break;
+          case 'decreaseFontSize': adjustFontSize(-1); break;
+          case 'closePanels': closeSettings(); closeUrl(); break;
+        }
+        return;
+      }
     }
   });
 
