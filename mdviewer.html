@@ -48,7 +48,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helv
 #sidebar.full { top: 0; }
 /* sidebar tabs */
 .sidebar-tabs { display: flex; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-.sidebar-tab { flex: 1; padding: 8px 4px; font-size: 12px; font-weight: 500; border: none; background: none; color: var(--text-dim); cursor: pointer; font-family: inherit; border-bottom: 2px solid transparent; transition: color .12s, border-color .12s; outline: none; }
+.sidebar-tab { flex: 1; padding: 8px 4px; font-size: var(--sidebar-font-size, 12px); font-weight: 500; border: none; background: none; color: var(--text-dim); cursor: pointer; font-family: inherit; border-bottom: 2px solid transparent; transition: color .12s, border-color .12s; outline: none; }
 .sidebar-tab:hover { color: var(--text); }
 .sidebar-tab.active { color: var(--toc-active); border-bottom-color: var(--toc-active); }
 /* sidebar panels */
@@ -56,7 +56,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helv
 .sidebar-panel.active { display: block; }
 /* file tree */
 .tree { padding: 4px 0; }
-.tree-dir-header, .tree-file { display: flex; align-items: center; width: 100%; padding: 4px 8px 4px 0; font-size: 12.5px; color: var(--toc-text); cursor: pointer; border: none; background: none; text-align: left; font-family: inherit; overflow: hidden; transition: background .12s, color .12s; border-left: 2px solid transparent; }
+.tree-dir-header, .tree-file { display: flex; align-items: center; width: 100%; padding: 4px 8px 4px 0; font-size: var(--sidebar-font-size, 12.5px); color: var(--toc-text); cursor: pointer; border: none; background: none; text-align: left; font-family: inherit; overflow: hidden; transition: background .12s, color .12s; border-left: 2px solid transparent; }
 .tree-dir-header, .tree-file { outline: none; }
 .tree-dir-header:hover, .tree-file:hover { background: var(--file-hover); color: var(--toc-hover); }
 .tree-file.active { color: var(--toc-active); border-left-color: var(--toc-active); font-weight: 500; background: var(--file-active); }
@@ -66,11 +66,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helv
 .tree-children { overflow: hidden; }
 /* toc */
 #tocPanel { padding: 4px 0; }
-#tocPanel a { display: block; padding: 3px 16px; color: var(--toc-text); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-left: 2px solid transparent; transition: color .15s, border-color .15s; font-size: 13px; }
+#tocPanel a { display: block; padding: 3px 16px; color: var(--toc-text); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-left: 2px solid transparent; transition: color .15s, border-color .15s; font-size: var(--sidebar-font-size, 13px); }
 #tocPanel a:hover { color: var(--toc-hover); }
 #tocPanel a.active { color: var(--toc-active); border-left-color: var(--toc-active); font-weight: 500; }
-#tocPanel .toc-h2 { padding-left: 32px; font-size: 12.5px; }
-#tocPanel .toc-h3 { padding-left: 48px; font-size: 12px; }
+#tocPanel .toc-h2 { padding-left: 32px; font-size: calc(var(--sidebar-font-size, 13px) - 0.5px); }
+#tocPanel .toc-h3 { padding-left: 48px; font-size: calc(var(--sidebar-font-size, 13px) - 1px); }
 /* content */
 #content { flex: 1; min-width: 0; padding: 40px 24px; display: flex; justify-content: center; }
 #content-inner { max-width: var(--content-width); width: 100%; min-height: 200px; }
@@ -260,7 +260,7 @@ input[type="range"] { width: 100%; margin: 4px 0; accent-color: var(--btn-primar
       </div>
       <div class="setting-group">
         <label>字号 <span class="value" id="fontSizeValue">16px</span></label>
-        <input type="range" id="fontSizeRange" min="13" max="24" value="16" step="1">
+        <input type="range" id="fontSizeRange" min="12" max="36" value="16" step="1">
       </div>
       <div class="setting-group">
         <label>行高 <span class="value" id="lineHeightValue">1.75</span></label>
@@ -283,10 +283,18 @@ input[type="range"] { width: 100%; margin: 4px 0; accent-color: var(--btn-primar
           <button class="opt-btn" data-value="full">全宽</button>
         </div>
       </div>
+      <div class="setting-group">
+        <label>侧栏字号 <span class="value" id="sidebarFontSizeValue">13px</span></label>
+        <input type="range" id="sidebarFontSizeRange" min="10" max="24" value="13" step="1">
+      </div>
       <div class="setting-group" style="border-top:1px solid var(--border);padding-top:14px;">
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:13px;">
           <input type="checkbox" id="alwaysToolbarCb" style="accent-color:var(--btn-primary);width:16px;height:16px;cursor:pointer;">
           始终显示顶栏
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:13px;margin-top:8px;">
+          <input type="checkbox" id="swapTabsCb" style="accent-color:var(--btn-primary);width:16px;height:16px;cursor:pointer;">
+          调换侧栏选项卡顺序
         </label>
       </div>
     </div>
@@ -343,6 +351,17 @@ function saveSettings() {
   localStorage.setItem('mdviewer-settings', JSON.stringify(state.settings));
 }
 
+// ---- session persistence (last opened file) ----
+function saveSession(data) {
+  try { localStorage.setItem('mdviewer-session', JSON.stringify(data)); } catch {}
+}
+function loadSession() {
+  try { return JSON.parse(localStorage.getItem('mdviewer-session')) || null; } catch { return null; }
+}
+function clearSession() {
+  try { localStorage.removeItem('mdviewer-session'); } catch {}
+}
+
 // ---- theme application ----
 function applySettings() {
   const s = state.settings;
@@ -372,6 +391,16 @@ function applySettings() {
   document.body.style.fontFamily = fonts[s.fontFamily] || fonts.sans;
   document.body.style.fontSize = (s.fontSize || 16) + 'px';
   root.style.setProperty('--lh', s.lineHeight || 1.75);
+  root.style.setProperty('--sidebar-font-size', (s.sidebarFontSize || 13) + 'px');
+
+  // Swap sidebar tabs
+  const tabsContainer = document.querySelector('.sidebar-tabs');
+  const tabs = tabsContainer.querySelectorAll('.sidebar-tab');
+  if (s.swapSidebarTabs && tabs.length === 2 && tabs[0].dataset.panel !== 'toc') {
+    tabsContainer.appendChild(tabs[0]);
+  } else if (!s.swapSidebarTabs && tabs.length === 2 && tabs[0].dataset.panel !== 'files') {
+    tabsContainer.appendChild(tabs[0]);
+  }
 
   applyCodeTheme(s.codeTheme || 'auto');
   syncSettingUI();
@@ -400,7 +429,10 @@ function syncSettingUI() {
   document.getElementById('fontSizeValue').textContent = (s.fontSize || 16) + 'px';
   document.getElementById('lineHeightRange').value = s.lineHeight || 1.75;
   document.getElementById('lineHeightValue').textContent = s.lineHeight || 1.75;
+  document.getElementById('sidebarFontSizeRange').value = s.sidebarFontSize || 13;
+  document.getElementById('sidebarFontSizeValue').textContent = (s.sidebarFontSize || 13) + 'px';
   document.getElementById('alwaysToolbarCb').checked = !!s.alwaysShowToolbar;
+  document.getElementById('swapTabsCb').checked = !!s.swapSidebarTabs;
 }
 
 function syncCustomColorInputs() {
@@ -767,7 +799,7 @@ function fetchUrl(url) {
   document.getElementById('loading').classList.add('show');
   fetch(url)
     .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
-    .then(text => { if (seq !== urlLoadSeq) return; const name = (url.split('/').pop() || url).split('?')[0].split('#')[0]; render(text, name); closeUrl(); })
+    .then(text => { if (seq !== urlLoadSeq) return; const name = (url.split('/').pop() || url).split('?')[0].split('#')[0]; render(text, name); closeUrl(); saveSession({ type: 'url', url, name }); })
     .catch(e => { if (seq === urlLoadSeq) alert('获取失败: ' + e.message); })
     .finally(() => { if (seq === urlLoadSeq) document.getElementById('loading').classList.remove('show'); });
 }
@@ -907,6 +939,14 @@ function init() {
   document.getElementById('lineHeightRange').addEventListener('input', e => {
     state.settings.lineHeight = +e.target.value; saveSettings(); applySettings();
   });
+  document.getElementById('sidebarFontSizeRange').addEventListener('input', e => {
+    state.settings.sidebarFontSize = +e.target.value; saveSettings(); applySettings();
+  });
+
+  // Swap tabs checkbox
+  document.getElementById('swapTabsCb').addEventListener('change', e => {
+    state.settings.swapSidebarTabs = e.target.checked; saveSettings(); applySettings();
+  });
 
   // Scroll: hide toolbar on down, show on up (desktop only)
   let lastScrollY = 0;
@@ -954,7 +994,7 @@ function init() {
   // Tauri desktop: read file passed via command-line arg (file association)
   if (window.__TAURI__) {
     window.__TAURI__.core.invoke('get_initial_file').then(data => {
-      if (data) render(data.content, data.name);
+      if (data) { render(data.content, data.name); saveSession({ type: 'tauri', name: data.name }); }
     }).catch(() => {});
     // External links → open in default browser
     document.getElementById('content-body').addEventListener('click', e => {
@@ -964,6 +1004,13 @@ function init() {
         window.__TAURI__.opener.openUrl(link.href);
       }
     });
+  }
+
+  // Restore last session (only URL, folder/files can't persist)
+  const session = loadSession();
+  if (session && session.type === 'url' && !window.__TAURI__) {
+    // Only auto-restore if not on Tauri (Tauri handles its own session via CLI)
+    fetchUrl(session.url);
   }
 }
 
