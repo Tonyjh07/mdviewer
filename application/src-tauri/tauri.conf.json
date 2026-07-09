@@ -1,6 +1,6 @@
 {
   "productName": "mdviewer",
-  "version": "0.2.1",
+  "version": "0.2.3",
   "identifier": "com.mdviewer.desktop",
   "build": {
     "frontendDist": "../frontend"
@@ -14,7 +14,7 @@
         "height": 800,
         "resizable": true,
         "fullscreen": false,
-        "dragDropEnabled": false
+        "dragDropEnabled": true
       }
     ],
     "security": {

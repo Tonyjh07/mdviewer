@@ -8,6 +8,19 @@ struct FileData {
     path: String,
 }
 
+#[derive(Serialize)]
+struct FolderFile {
+    name: String,
+    rel_path: String,
+    full_path: String,
+}
+
+#[derive(Serialize)]
+struct FolderData {
+    folder_path: String,
+    files: Vec<FolderFile>,
+}
+
 /// 读取命令行传入的 .md 文件（文件关联 / 右键打开方式）
 #[tauri::command]
 fn get_initial_file() -> Result<Option<FileData>, String> {
@@ -39,11 +52,56 @@ fn read_file(path: String) -> Result<FileData, String> {
     Ok(FileData { content, name, path: path.clone() })
 }
 
+/// 扫描文件夹，返回其中所有 .md 文件（最多 2000 个，深度 ≤10）
+#[tauri::command]
+fn scan_folder(path: String) -> Result<FolderData, String> {
+    let dir = Path::new(&path);
+    if !dir.is_dir() {
+        return Err("路径不是文件夹".into());
+    }
+    let mut files = Vec::new();
+    for entry in walkdir::WalkDir::new(&path)
+        .max_depth(10)
+        .into_iter()
+        .filter_entry(|e| !e.file_name().to_string_lossy().starts_with('.'))
+    {
+        let entry = entry.map_err(|e| e.to_string())?;
+        if entry.file_type().is_file() {
+            let name = entry.file_name().to_string_lossy().to_string();
+            if name.ends_with(".md") || name.ends_with(".markdown") || name.ends_with(".mdown") {
+                let full_path = entry.path().to_string_lossy().to_string();
+                let rel_path = full_path
+                    .strip_prefix(&format!("{}\\", path))
+                    .or_else(|| full_path.strip_prefix(&format!("{}/", path)))
+                    .unwrap_or(&full_path)
+                    .to_string()
+                    .replace('\\', "/");
+                files.push(FolderFile { name, rel_path, full_path });
+                if files.len() >= 2000 { break; }
+            }
+        }
+    }
+    files.sort_by(|a, b| a.rel_path.cmp(&b.rel_path));
+    Ok(FolderData { folder_path: path, files })
+}
+
+/// 判断路径是否为目录（拖放时使用）
+#[tauri::command]
+fn is_dir(path: String) -> bool {
+    std::path::Path::new(&path).is_dir()
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![get_initial_file, read_file])
+        .plugin(tauri_plugin_dialog::init())
+        .invoke_handler(tauri::generate_handler![
+            get_initial_file,
+            read_file,
+            scan_folder,
+            is_dir,
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

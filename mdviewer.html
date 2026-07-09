@@ -350,7 +350,8 @@ const THEMES = {
 // ---- state ----
 const state = {
   fileName: '',
-  folderFiles: [],       // Array<{file, name, relPath}>
+  folderFiles: [],       // Array<{file, name, relPath, fullPath}>
+  folderPath: '',        // Tauri: 已打开文件夹的路径
   settings: loadSettings()
 };
 
@@ -746,7 +747,12 @@ function loadFile(file) {
   }
   const seq = ++fileLoadSeq;
   const reader = new FileReader();
-  reader.onload = e => { if (seq === fileLoadSeq) render(e.target.result, file.name); };
+  reader.onload = e => {
+    if (seq === fileLoadSeq) {
+      render(e.target.result, file.name);
+      saveSession(loadSession() || {});
+    }
+  };
   reader.readAsText(file);
 }
 
@@ -773,19 +779,26 @@ function readDirRecursive(entry, basePath, isRoot) {
   });
 }
 
-function loadFolder(files) {
+function loadFolder(files, folderPath) {
   const mdFiles = [];
   for (const f of files) {
     const file = f.file || f;
-    const relPath = f.relPath || file.webkitRelativePath || file.name;
-    if (file.name.match(/\.(md|markdown|mdown)$/i)) {
-      mdFiles.push({ file, name: file.name, relPath });
+    const name = f.name || file.name;
+    const relPath = f.relPath || f.rel_path || (f.file && (f.file.webkitRelativePath || f.file.name)) || file.webkitRelativePath || file.name || name;
+    if (name && name.match(/\.(md|markdown|mdown)$/i)) {
+      const entry = { name, relPath };
+      if (f.fullPath) entry.fullPath = f.fullPath;
+      else if (f.full_path) entry.fullPath = f.full_path;
+      else if (file && !f.file) entry.file = file;
+      else if (f.file) entry.file = f.file;
+      mdFiles.push(entry);
     }
   }
   if (!mdFiles.length) { alert('文件夹中未找到 .md 文件'); return; }
 
   mdFiles.sort((a, b) => a.relPath.localeCompare(b.relPath));
   state.folderFiles = mdFiles;
+  state.folderPath = folderPath || '';
 
   document.getElementById('noFolderMsg').style.display = 'none';
   renderFileTree();
@@ -794,6 +807,11 @@ function loadFolder(files) {
   switchSidebarTab('files');
 
   loadFolderFileByRel(state.folderFiles[0].relPath);
+  if (window.__TAURI__ && folderPath) {
+    saveSession({ type: 'tauri', folderPath, activeRelPath: state.folderFiles[0].relPath });
+  } else {
+    saveSession(loadSession() || {});
+  }
 }
 
 function renderFileTree() {
@@ -867,18 +885,32 @@ function loadFolderFileByRel(relPath) {
   if (idx === -1) return;
   activeRelPath = relPath;
   const item = state.folderFiles[idx];
-  const seq = ++loadSeq;
 
   document.querySelectorAll('#fileTree .tree-file').forEach(el => {
     el.classList.toggle('active', el.dataset.rel === relPath);
   });
 
-  const reader = new FileReader();
-  reader.onload = e => {
-    if (seq !== loadSeq) return;
-    render(e.target.result, item.relPath);
-  };
-  reader.readAsText(item.file);
+  if ((item.fullPath || item.full_path) && window.__TAURI__) {
+    const seq = ++loadSeq;
+    window.__TAURI__.core.invoke('read_file', { path: item.fullPath || item.full_path }).then(data => {
+      if (seq !== loadSeq) return;
+      if (data) render(data.content, item.relPath);
+    }).catch(() => {});
+  } else if (item.file) {
+    const seq = ++loadSeq;
+    const reader = new FileReader();
+    reader.onload = e => {
+      if (seq !== loadSeq) return;
+      render(e.target.result, item.relPath);
+    };
+    reader.readAsText(item.file);
+  }
+
+  if (window.__TAURI__ && state.folderPath) {
+    saveSession({ type: 'tauri', folderPath: state.folderPath, activeRelPath: relPath });
+  } else {
+    saveSession(loadSession() || {});
+  }
 }
 
 // ---- sidebar tabs ----
@@ -936,14 +968,36 @@ function closeUrl() { document.getElementById('urlOverlay').classList.remove('op
 // ---- event binding ----
 function init() {
   // File open
-  document.getElementById('openBtn').addEventListener('click', () => document.getElementById('fileInput').click());
+  document.getElementById('openBtn').addEventListener('click', async () => {
+    if (window.__TAURI__) {
+      const path = await window.__TAURI__.dialog.open({
+        filters: [{ name: 'Markdown', extensions: ['md', 'markdown', 'mdown'] }]
+      });
+      if (path) {
+        const data = await window.__TAURI__.core.invoke('read_file', { path });
+        if (data) { render(data.content, data.name); saveSession({ type: 'tauri', name: data.name, path }); }
+      }
+    } else {
+      document.getElementById('fileInput').click();
+    }
+  });
   document.getElementById('fileInput').addEventListener('change', e => {
     if (e.target.files[0]) loadFile(e.target.files[0]);
     e.target.value = '';
   });
 
   // Folder open
-  document.getElementById('folderBtn').addEventListener('click', () => document.getElementById('folderInput').click());
+  document.getElementById('folderBtn').addEventListener('click', async () => {
+    if (window.__TAURI__) {
+      const folderPath = await window.__TAURI__.dialog.open({ directory: true });
+      if (folderPath) {
+        const fd = await window.__TAURI__.core.invoke('scan_folder', { path: folderPath });
+        loadFolder(fd.files, folderPath);
+      }
+    } else {
+      document.getElementById('folderInput').click();
+    }
+  });
   document.getElementById('folderInput').addEventListener('change', e => {
     if (e.target.files.length) loadFolder(e.target.files);
     e.target.value = '';
@@ -976,7 +1030,14 @@ function init() {
         if (droppedFiles.length) loadFolder(droppedFiles);
       });
     } else {
-      if (droppedFiles[0]) loadFile(droppedFiles[0]);
+      const file = droppedFiles[0];
+      if (file) {
+        loadFile(file);
+        // WebView2 可能提供非标准的 file.path
+        if (window.__TAURI__ && file.path && file.name.match(/\.(md|markdown|mdown)$/i)) {
+          saveSession({ type: 'tauri', name: file.name, path: file.path });
+        }
+      }
     }
   });
 
@@ -1102,8 +1163,8 @@ if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Me
       if (shortcutMatch(e, s)) {
         e.preventDefault();
         switch (action) {
-          case 'openFile': document.getElementById('fileInput').click(); break;
-          case 'openFolder': document.getElementById('folderInput').click(); break;
+          case 'openFile': window.__TAURI__ ? document.getElementById('openBtn').click() : document.getElementById('fileInput').click(); break;
+          case 'openFolder': window.__TAURI__ ? document.getElementById('folderBtn').click() : document.getElementById('folderInput').click(); break;
           case 'toggleSidebar': toggleSidebar(); break;
           case 'openUrl': openUrl(); break;
           case 'openSettings': openSettings(); break;
@@ -1121,30 +1182,43 @@ if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Me
     mermaid.initialize({ startOnLoad: false });
   }
 
-  // Tauri desktop: read file passed via command-line arg (file association)
+  // Tauri desktop
   if (window.__TAURI__) {
-    function restoreTauriSession() {
-      const session = loadSession();
-      restoreSidebarSession(session);
-      if (session && session.type === 'tauri' && session.path) {
-        window.__TAURI__.core.invoke('read_file', { path: session.path }).then(d => {
-          if (d) { render(d.content, d.name); saveSession({ type: 'tauri', name: d.name, path: d.path }); }
-        }).catch(() => clearSession());
+    // Drag-drop (provides file/folder paths via native API)
+    async function handleTauriDrop(paths) {
+      const mdPaths = paths.filter(p => /\.(md|markdown|mdown)$/i.test(p));
+      if (paths.length === 1 && mdPaths.length === 0) {
+        try {
+          const isDir = await window.__TAURI__.core.invoke('is_dir', { path: paths[0] });
+          if (isDir) {
+            const fd = await window.__TAURI__.core.invoke('scan_folder', { path: paths[0] });
+            if (fd.files && fd.files.length) { loadFolder(fd.files, paths[0]); return; }
+          }
+        } catch {}
+      }
+      if (mdPaths.length) {
+        try {
+          const data = await window.__TAURI__.core.invoke('read_file', { path: mdPaths[0] });
+          if (data) { render(data.content, data.name); saveSession({ type: 'tauri', name: data.name, path: mdPaths[0] }); }
+        } catch {}
       }
     }
-    window.__TAURI__.core.invoke('get_initial_file').then(data => {
-      if (data) {
-        render(data.content, data.name);
-        saveSession({ type: 'tauri', name: data.name, path: data.path });
+    try {
+      const { getCurrentWebview } = window.__TAURI__.webview;
+      if (getCurrentWebview) {
+        getCurrentWebview().onDragDropEvent((event) => {
+          const p = event.payload;
+          const dz = document.getElementById('dropzone');
+          if (p.type === 'over') { dz.classList.add('drag-over'); return; }
+          if (p.type === 'leave') { dz.classList.remove('drag-over'); return; }
+          if (p.type !== 'drop') return;
+          dz.classList.remove('drag-over');
+          const paths = p.paths;
+          if (!paths || !paths.length) return;
+          handleTauriDrop(paths);
+        }).catch(() => {});
       }
-      const session = loadSession();
-      restoreSidebarSession(session);
-      if (!data && session && session.type === 'tauri' && session.path) {
-        window.__TAURI__.core.invoke('read_file', { path: session.path }).then(d => {
-          if (d) { render(d.content, d.name); saveSession({ type: 'tauri', name: d.name, path: d.path }); }
-        }).catch(() => clearSession());
-      }
-    }).catch(() => restoreTauriSession());
+    } catch (_e) {}
     // External links → open in default browser
     document.getElementById('content-body').addEventListener('click', e => {
       const link = e.target.closest('a');
@@ -1153,6 +1227,37 @@ if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Me
         window.__TAURI__.opener.openUrl(link.href);
       }
     });
+    // Session restore: CLI arg → saved session
+    async function restoreTauriSession() {
+      const session = loadSession();
+      restoreSidebarSession(session);
+      if (session && session.type === 'tauri') {
+        if (session.path) {
+          try {
+            const d = await window.__TAURI__.core.invoke('read_file', { path: session.path });
+            if (d) { render(d.content, d.name); saveSession({ type: 'tauri', name: d.name, path: d.path }); }
+          } catch { clearSession(); }
+        } else if (session.folderPath) {
+          try {
+            const fd = await window.__TAURI__.core.invoke('scan_folder', { path: session.folderPath });
+            if (fd.files && fd.files.length) {
+              loadFolder(fd.files, session.folderPath);
+              if (session.activeRelPath && fd.files.some(f => (f.rel_path) === session.activeRelPath)) {
+                loadFolderFileByRel(session.activeRelPath);
+              }
+            }
+          } catch { clearSession(); }
+        }
+      }
+    }
+    window.__TAURI__.core.invoke('get_initial_file').then(data => {
+      if (data) {
+        render(data.content, data.name);
+        saveSession({ type: 'tauri', name: data.name, path: data.path });
+      } else {
+        restoreTauriSession();
+      }
+    }).catch(() => restoreTauriSession());
   } else {
     const session = loadSession();
     restoreSidebarSession(session);
