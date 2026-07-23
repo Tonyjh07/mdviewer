@@ -1,7 +1,7 @@
 {
   "productName": "mdviewer",
   "version": "0.2.4",
-  "identifier": "com.mdviewer.desktop",
+  "identifier": "com.mdviewer.app",
   "build": {
     "frontendDist": "../frontend"
   },
@@ -23,7 +23,7 @@
   },
   "bundle": {
     "active": true,
-    "targets": "nsis",
+    "targets": "all",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -38,6 +38,9 @@
         "description": "Markdown 文档",
         "mimeType": "text/markdown"
       }
-    ]
-  }
+    ],
+    "android": {
+      "minSdkVersion": 24
+    }
+  },
 }
