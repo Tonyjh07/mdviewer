@@ -91,6 +91,21 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helv
 #dropzone svg { width: 56px; height: 56px; margin-bottom: 16px; opacity: .4; color: var(--text-dim); }
 #dropzone p { font-size: 15px; margin-bottom: 6px; color: var(--text); }
 #dropzone .sub { font-size: 13px; color: var(--text-dim); }
+/* mobile welcome */
+.android #dropzone { display: none; }
+.android-welcome { display: none; flex-direction: column; align-items: center; justify-content: center; padding: 48px 24px; text-align: center; color: var(--text-dim); }
+.android .android-welcome { display: flex; }
+.android-welcome .logo-large { font-size: 28px; font-weight: 700; color: var(--heading); margin-bottom: 8px; }
+.android-welcome .version { font-size: 12px; color: var(--text-dim); margin-bottom: 28px; }
+.android-welcome .action-list { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 280px; }
+.android-welcome .action-item { display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: var(--btn-bg); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 13px; text-decoration: none; cursor: pointer; transition: background .15s; }
+.android-welcome .action-item:active { background: var(--btn-hover); }
+.android-welcome .action-item svg { width: 22px; height: 22px; flex-shrink: 0; color: var(--link); }
+.android-welcome .action-item .action-text { flex: 1; text-align: left; }
+.android-welcome .action-item .action-text strong { display: block; font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+.android-welcome .action-item .action-text span { font-size: 11px; color: var(--text-dim); }
+.android-welcome .feature-list { margin-top: 24px; font-size: 12px; line-height: 1.8; color: var(--text-dim); max-width: 260px; }
+.android-welcome .feature-list svg { width: 14px; height: 14px; vertical-align: middle; margin-right: 4px; color: var(--link); }
 /* ---- Typography ---- */
 #content-inner h1, #content-inner h2, #content-inner h3, #content-inner h4, #content-inner h5 { color: var(--heading); font-weight: 600; line-height: 1.35; margin-top: 1.8em; margin-bottom: .5em; }
 #content-inner h1 { font-size: 1.85em; padding-bottom: .3em; border-bottom: 1px solid var(--h-border); margin-top: 0; }
@@ -263,6 +278,30 @@ input[type="range"] { width: 100%; margin: 4px 0; accent-color: var(--btn-primar
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
           <p>拖入 Markdown 文件，或点击上方按钮</p>
           <div class="sub">支持 .md 文件 / 文件夹 / URL 导入 / LaTeX 公式渲染</div>
+        </div>
+        <div class="android-welcome">
+          <div class="logo-large">mdviewer</div>
+          <div class="version">v0.2.4</div>
+          <div class="action-list">
+            <button class="action-item" data-action="openFile">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+              <div class="action-text"><strong>打开文件</strong><span>选择本机 .md 文件</span></div>
+            </button>
+            <button class="action-item" data-action="openFolder">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+              <div class="action-text"><strong>打开文件夹</strong><span>浏览文件夹中的 Markdown 文件</span></div>
+            </button>
+            <button class="action-item" data-action="url">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+              <div class="action-text"><strong>URL 导入</strong><span>从网络链接加载 Markdown</span></div>
+            </button>
+          </div>
+          <div class="feature-list">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg> 支持 LaTeX 公式 / Mermaid 图表<br>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg> 多主题 / 字体缩放 / 会话保存<br>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg> 支持离线缓存（PWA）<br>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg> ← 从左侧边缘右滑打开侧栏
+          </div>
         </div>
       </div>
     </main>
@@ -1346,17 +1385,23 @@ if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Me
     // Mobile action sheet
     const mobileSheet = document.getElementById('mobileSheet');
     document.getElementById('menuBtn').addEventListener('click', () => mobileSheet.classList.toggle('open'));
+    function handleMobileAction(action) {
+      if (action === 'openFile') { document.getElementById('fileInput').click(); }
+      else if (action === 'openFolder') pickFolder();
+      else if (action === 'url') openUrl();
+      else if (action === 'sidebar') toggleSidebar();
+      else if (action === 'settings') openSettings();
+      else if (action === 'github') { if (window.__TAURI__) window.__TAURI__.opener.openUrl('https://github.com/Tonyjh07/mdviewer'); else window.open('https://github.com/Tonyjh07/mdviewer', '_blank'); }
+    }
     mobileSheet.querySelectorAll('.mobile-sheet-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         mobileSheet.classList.remove('open');
-        const action = btn.dataset.action;
-        if (action === 'openFile') { document.getElementById('fileInput').click(); }
-        else if (action === 'openFolder') pickFolder();
-        else if (action === 'url') openUrl();
-        else if (action === 'sidebar') toggleSidebar();
-        else if (action === 'settings') openSettings();
-        else if (action === 'github') { if (window.__TAURI__) window.__TAURI__.opener.openUrl('https://github.com/Tonyjh07/mdviewer'); else window.open('https://github.com/Tonyjh07/mdviewer', '_blank'); }
+        handleMobileAction(btn.dataset.action);
       });
+    });
+    // Welcome screen action buttons
+    document.querySelectorAll('.android-welcome .action-item').forEach(btn => {
+      btn.addEventListener('click', () => handleMobileAction(btn.dataset.action));
     });
     // Close sheet on content tap
     document.getElementById('content').addEventListener('click', () => {
@@ -1377,7 +1422,16 @@ if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Me
       const dx = e.changedTouches[0].clientX - swipeStartX;
       const dy = e.changedTouches[0].clientY - swipeStartY;
       if (Math.abs(dy) > 120) return;
-      if (dx > 30 && swipeStartX < window.innerWidth / 3) toggleSidebar();
+      const sb = document.getElementById('sidebar');
+      const touchX = e.changedTouches[0].clientX;
+      // 侧栏已打开：在侧栏上左滑，或在遮罩上任意方向滑动→关闭
+      if (sb.classList.contains('open')) {
+        if (dx < -30) { toggleSidebar(); }
+        else if (touchX > 280 && Math.abs(dx) > 30) { toggleSidebar(); }
+      } else {
+        // 侧栏关闭：左侧边缘右滑→打开
+        if (dx > 30 && swipeStartX < window.innerWidth / 3) toggleSidebar();
+      }
     }, { passive: true });
   }
 
