@@ -38,6 +38,9 @@
         "description": "Markdown 文档",
         "mimeType": "text/markdown"
       }
-    ]
+    ],
+    "android": {
+      "minSdkVersion": 24
+    }
   }
 }

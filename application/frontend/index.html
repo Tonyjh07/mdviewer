@@ -163,17 +163,27 @@ input[type="range"] { width: 100%; margin: 4px 0; accent-color: var(--btn-primar
 #loading.show { display: flex; align-items: center; gap: 8px; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .spinner { width: 14px; height: 14px; border: 2px solid var(--border); border-top-color: var(--link); border-radius: 50%; animation: spin .6s linear infinite; }
+#sidebar-overlay { display: none; }
 /* responsive */
 @media (max-width: 768px) {
   #toolbar { padding: 0 6px; gap: 3px; }
   #toolbar button { padding: 5px 7px; font-size: 11.5px; }
   .logo { font-size: 13px; }
-  #sidebar { position: fixed; top: 48px; bottom: 0; left: 0; z-index: 90; width: 240px; box-shadow: 4px 0 12px var(--panel-shadow); }
+  #sidebar { position: fixed; top: 48px; bottom: 0; left: 0; z-index: 90; width: 260px; box-shadow: 4px 0 12px var(--panel-shadow); }
   #content { padding: 24px 16px; }
+  #sidebar.open + #sidebar-overlay { display: block; }
 }
 @media (max-width: 480px) {
   #content { padding: 16px 12px; }
 }
+/* Android touch: larger hit targets, always-show toolbar, drawer sidebar */
+.android #toolbar button, .android .btn { min-height: 44px; padding: 8px 12px; font-size: 13px; }
+.android #sidebar { width: 280px; top: 0; z-index: 200; transition: transform .25s ease; transform: translateX(-100%); }
+.android #sidebar.open { transform: translateX(0); }
+.android #sidebar-overlay { display: none; position: fixed; inset: 0; z-index: 199; background: var(--overlay-bg); }
+.android #sidebar.open + #sidebar-overlay { display: block; }
+.android #toolbar.hide { top: 0; }
+.android #sidebar.full { top: 0; }
 /* print */
 @media print {
   #toolbar, #sidebar, .overlay, #loading, #dropzone { display: none !important; }
@@ -354,6 +364,8 @@ const state = {
   folderPath: '',        // Tauri: 已打开文件夹的路径
   settings: loadSettings()
 };
+const isAndroid = /Android/i.test(navigator.userAgent);
+const isDesktopTauri = window.__TAURI__ && !isAndroid;
 
 // ---- settings persistence ----
 function loadSettings() {
@@ -807,7 +819,7 @@ function loadFolder(files, folderPath) {
   switchSidebarTab('files');
 
   loadFolderFileByRel(state.folderFiles[0].relPath);
-  if (window.__TAURI__ && folderPath) {
+  if (isDesktopTauri && folderPath) {
     saveSession({ type: 'tauri', folderPath, activeRelPath: state.folderFiles[0].relPath });
   } else {
     saveSession(loadSession() || {});
@@ -890,7 +902,7 @@ function loadFolderFileByRel(relPath) {
     el.classList.toggle('active', el.dataset.rel === relPath);
   });
 
-  if ((item.fullPath || item.full_path) && window.__TAURI__) {
+  if ((item.fullPath || item.full_path) && isDesktopTauri) {
     const seq = ++loadSeq;
     window.__TAURI__.core.invoke('read_file', { path: item.fullPath || item.full_path }).then(data => {
       if (seq !== loadSeq) return;
@@ -906,7 +918,7 @@ function loadFolderFileByRel(relPath) {
     reader.readAsText(item.file);
   }
 
-  if (window.__TAURI__ && state.folderPath) {
+  if (isDesktopTauri && state.folderPath) {
     saveSession({ type: 'tauri', folderPath: state.folderPath, activeRelPath: relPath });
   } else {
     saveSession(loadSession() || {});
@@ -971,7 +983,7 @@ function closeUrl() { document.getElementById('urlOverlay').classList.remove('op
 function init() {
   // File open
   document.getElementById('openBtn').addEventListener('click', async () => {
-    if (window.__TAURI__) {
+    if (isDesktopTauri) {
       const path = await window.__TAURI__.dialog.open({
         filters: [{ name: 'Markdown', extensions: ['md', 'markdown', 'mdown'] }]
       });
@@ -990,7 +1002,7 @@ function init() {
 
   // Folder open
   document.getElementById('folderBtn').addEventListener('click', async () => {
-    if (window.__TAURI__) {
+    if (isDesktopTauri) {
       const folderPath = await window.__TAURI__.dialog.open({ directory: true });
       if (folderPath) {
         const fd = await window.__TAURI__.core.invoke('scan_folder', { path: folderPath });
@@ -1036,7 +1048,7 @@ function init() {
       if (file) {
         loadFile(file);
         // WebView2 可能提供非标准的 file.path
-        if (window.__TAURI__ && file.path && file.name.match(/\.(md|markdown|mdown)$/i)) {
+        if (isDesktopTauri && file.path && file.name.match(/\.(md|markdown|mdown)$/i)) {
           saveSession({ type: 'tauri', name: file.name, path: file.path });
         }
       }
@@ -1165,8 +1177,8 @@ if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Me
       if (shortcutMatch(e, s)) {
         e.preventDefault();
         switch (action) {
-          case 'openFile': window.__TAURI__ ? document.getElementById('openBtn').click() : document.getElementById('fileInput').click(); break;
-          case 'openFolder': window.__TAURI__ ? document.getElementById('folderBtn').click() : document.getElementById('folderInput').click(); break;
+          case 'openFile': isDesktopTauri ? document.getElementById('openBtn').click() : document.getElementById('fileInput').click(); break;
+          case 'openFolder': isDesktopTauri ? document.getElementById('folderBtn').click() : document.getElementById('folderInput').click(); break;
           case 'toggleSidebar': toggleSidebar(); break;
           case 'openUrl': openUrl(); break;
           case 'openSettings': openSettings(); break;
@@ -1179,14 +1191,34 @@ if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Me
     }
   });
 
+  // Android: 固定顶栏 + 侧栏 Drawer 遮罩
+  if (isAndroid) {
+    document.documentElement.classList.add('android');
+    state.settings.alwaysShowToolbar = true;
+    const overlay = document.createElement('div');
+    overlay.id = 'sidebar-overlay';
+    document.getElementById('sidebar').after(overlay);
+    overlay.addEventListener('click', () => { if (sidebarVisible) toggleSidebar(); });
+  }
+
   applySettings();
   if (typeof mermaid !== 'undefined') {
     mermaid.initialize({ startOnLoad: false });
   }
 
-  // Tauri desktop
+  // External links (works on all Tauri platforms, including Android)
   if (window.__TAURI__) {
-    // Drag-drop (provides file/folder paths via native API)
+    document.getElementById('content-body').addEventListener('click', e => {
+      const link = e.target.closest('a');
+      if (link && link.href && /^https?:\/\//i.test(link.href)) {
+        e.preventDefault();
+        window.__TAURI__.opener.openUrl(link.href);
+      }
+    });
+  }
+
+  // Desktop Tauri: drag-drop, native session restore, CLI arg
+  if (isDesktopTauri) {
     async function handleTauriDrop(paths) {
       const mdPaths = paths.filter(p => /\.(md|markdown|mdown)$/i.test(p));
       if (paths.length === 1 && mdPaths.length === 0) {
@@ -1221,15 +1253,6 @@ if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Me
         }).catch(() => {});
       }
     } catch (_e) {}
-    // External links → open in default browser
-    document.getElementById('content-body').addEventListener('click', e => {
-      const link = e.target.closest('a');
-      if (link && link.href && /^https?:\/\//i.test(link.href)) {
-        e.preventDefault();
-        window.__TAURI__.opener.openUrl(link.href);
-      }
-    });
-    // Session restore: CLI arg → saved session
     async function restoreTauriSession() {
       const session = loadSession();
       restoreSidebarSession(session);
