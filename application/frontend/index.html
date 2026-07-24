@@ -853,8 +853,11 @@ function loadFolder(files, folderPath) {
   switchSidebarTab('files');
 
   loadFolderFileByRel(state.folderFiles[0].relPath);
+  const firstFile = state.folderFiles[0];
   if (isDesktopTauri && folderPath) {
     saveSession({ type: 'tauri', folderPath, activeRelPath: state.folderFiles[0].relPath });
+  } else if (firstFile && firstFile.__scopedFolderId) {
+    saveSession({ type: 'scoped', folderId: firstFile.__scopedFolderId, folderName: folderPath, activeRelPath: state.folderFiles[0].relPath });
   } else {
     saveSession(loadSession() || {});
   }
@@ -936,7 +939,15 @@ function loadFolderFileByRel(relPath) {
     el.classList.toggle('active', el.dataset.rel === relPath);
   });
 
-  if ((item.fullPath || item.full_path) && (isDesktopTauri || window.__TAURI__)) {
+  if (item.__scopedFolderId) {
+    const seq = ++loadSeq;
+    window.__TAURI__.core.invoke('plugin:scoped-storage|read_text_file', {
+      req: { folderId: item.__scopedFolderId, path: item.relPath }
+    }).then(result => {
+      if (seq !== loadSeq) return;
+      if (result && result.contents) render(result.contents, item.relPath);
+    }).catch(() => {});
+  } else if ((item.fullPath || item.full_path) && (isDesktopTauri || window.__TAURI__)) {
     const seq = ++loadSeq;
     const path = item.fullPath || item.full_path;
     (path.startsWith('content://') ? window.__TAURI__.fs.readTextFile(path) : window.__TAURI__.core.invoke('read_file', { path })).then(data => {
@@ -958,6 +969,8 @@ function loadFolderFileByRel(relPath) {
 
   if (isDesktopTauri && state.folderPath) {
     saveSession({ type: 'tauri', folderPath: state.folderPath, activeRelPath: relPath });
+  } else if (window.__TAURI__ && item.__scopedFolderId) {
+    saveSession({ type: 'scoped', folderId: item.__scopedFolderId, folderName: state.folderPath, activeRelPath: relPath });
   } else {
     saveSession(loadSession() || {});
   }
@@ -1047,8 +1060,31 @@ function init() {
       document.body.appendChild(t);
       setTimeout(() => t.remove(), 3000);
     }
-    // 1) Tauri dialog + fs.readDir (works on desktop + Android SAF)
-    if (window.__TAURI__) {
+    // 1) Scoped-storage plugin (Android SAF via pickFolder + readDir)
+    if (window.__TAURI__ && isAndroid) {
+      try {
+        const folder = await window.__TAURI__.core.invoke('plugin:scoped-storage|pick_folder', {});
+        if (folder && folder.id) {
+          const mdFiles = await scanScopedFolder(folder.id);
+          if (mdFiles.length) {
+            for (const f of mdFiles) f.__scopedFolderId = folder.id;
+            loadFolder(mdFiles, folder.name || '');
+            return;
+          }
+          toast('文件夹中没有 .md 文件');
+          return;
+        }
+        return;
+      } catch (e) {
+        if (e && e.code && e.code !== 'CANCELLED') {
+          console.error('Scoped storage:', e);
+          toast('文件夹选择失败');
+        }
+        return;
+      }
+    }
+    // 2) Tauri dialog + fs.readDir (desktop only)
+    if (window.__TAURI__ && isDesktopTauri) {
       try {
         const dirPath = await window.__TAURI__.dialog.open({ directory: true });
         if (dirPath) {
@@ -1066,7 +1102,7 @@ function init() {
         return;
       } catch (e) { console.error('Tauri folder:', e); }
     }
-    // 2) showDirectoryPicker
+    // 3) showDirectoryPicker
         if (window.showDirectoryPicker) {
       try {
         const dir = await window.showDirectoryPicker();
@@ -1080,10 +1116,28 @@ function init() {
         if (entries.length) { loadFolder(entries, dir.name); return; }
       } catch (e) { if (e.name !== 'AbortError') console.error('showDirectoryPicker:', e); }
     }
-    // 3) webkitdirectory fallback
+    // 4) webkitdirectory fallback
     const fi = document.getElementById('folderInput');
     fi.click();
     setTimeout(() => { if (!fi.files.length) toast('文件夹选择不可用，请使用 URL 导入'); }, 1200);
+  }
+
+  async function scanScopedFolder(folderId, basePath = '', maxDepth = 10) {
+    const res = await window.__TAURI__.core.invoke('plugin:scoped-storage|read_dir', {
+      req: { folderId, path: basePath || undefined }
+    });
+    const entries = res.entries || res || [];
+    const files = [];
+    for (const entry of entries) {
+      if (entry.isFile && /\.(md|markdown|mdown)$/i.test(entry.name)) {
+        files.push({ name: entry.name, relPath: entry.path });
+      } else if (entry.isDir && maxDepth > 1) {
+        const sub = await scanScopedFolder(folderId, entry.path, maxDepth - 1);
+        files.push(...sub);
+        if (files.length >= 2000) break;
+      }
+    }
+    return files;
   }
   document.getElementById('folderBtn').addEventListener('click', pickFolder);
   document.getElementById('folderInput').addEventListener('change', e => {
@@ -1411,43 +1465,59 @@ if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Me
         }).catch(() => {});
       }
     } catch (_e) {}
-    async function restoreTauriSession() {
-      const session = loadSession();
-      restoreSidebarSession(session);
-      if (session && session.type === 'tauri') {
-        if (session.path) {
-          try {
-            const d = await window.__TAURI__.core.invoke('read_file', { path: session.path });
-            if (d) { render(d.content, d.name); saveSession({ type: 'tauri', name: d.name, path: d.path }); }
-          } catch { clearSession(); }
-        } else if (session.folderPath) {
-          try {
-            const fd = await window.__TAURI__.core.invoke('scan_folder', { path: session.folderPath });
-            if (fd.files && fd.files.length) {
-              loadFolder(fd.files, session.folderPath);
-              if (session.activeRelPath && fd.files.some(f => (f.rel_path) === session.activeRelPath)) {
-                loadFolderFileByRel(session.activeRelPath);
-              }
-            }
-          } catch { clearSession(); }
-        }
-      }
     }
-    window.__TAURI__.core.invoke('get_initial_file').then(data => {
-      if (data) {
-        render(data.content, data.name);
-        saveSession({ type: 'tauri', name: data.name, path: data.path });
-      } else {
-        restoreTauriSession();
-      }
-    }).catch(() => restoreTauriSession());
-  } else {
+
+    async function restoreScopedSession(session) {
+      try {
+        const mdFiles = await scanScopedFolder(session.folderId);
+        if (mdFiles.length) {
+          for (const f of mdFiles) f.__scopedFolderId = session.folderId;
+          loadFolder(mdFiles, session.folderName || '');
+          if (session.activeRelPath && mdFiles.some(f => f.relPath === session.activeRelPath)) {
+            loadFolderFileByRel(session.activeRelPath);
+          }
+        }
+      } catch { clearSession(); }
+    }
+
     const session = loadSession();
     restoreSidebarSession(session);
-    if (session && session.type === 'url') {
-      fetchUrl(session.url);
+    if (isDesktopTauri) {
+      async function restoreTauriSession() {
+        if (session && session.type === 'tauri') {
+          if (session.path) {
+            try {
+              const d = await window.__TAURI__.core.invoke('read_file', { path: session.path });
+              if (d) { render(d.content, d.name); saveSession({ type: 'tauri', name: d.name, path: d.path }); }
+            } catch { clearSession(); }
+          } else if (session.folderPath) {
+            try {
+              const fd = await window.__TAURI__.core.invoke('scan_folder', { path: session.folderPath });
+              if (fd.files && fd.files.length) {
+                loadFolder(fd.files, session.folderPath);
+                if (session.activeRelPath && fd.files.some(f => (f.rel_path) === session.activeRelPath)) {
+                  loadFolderFileByRel(session.activeRelPath);
+                }
+              }
+            } catch { clearSession(); }
+          }
+        }
+      }
+      window.__TAURI__.core.invoke('get_initial_file').then(data => {
+        if (data) {
+          render(data.content, data.name);
+          saveSession({ type: 'tauri', name: data.name, path: data.path });
+        } else {
+          restoreTauriSession();
+        }
+      }).catch(() => restoreTauriSession());
+    } else {
+      if (session && session.type === 'scoped' && window.__TAURI__) {
+        restoreScopedSession(session);
+      } else if (session && session.type === 'url') {
+        fetchUrl(session.url);
+      }
     }
-  }
   // URL query parameter: ?url=... (优先级高于会话)
   const qUrl = new URLSearchParams(location.search).get('url');
   if (qUrl) setTimeout(() => fetchUrl(qUrl), 0);

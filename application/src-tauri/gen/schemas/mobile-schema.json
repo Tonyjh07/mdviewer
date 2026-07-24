@@ -6049,6 +6049,288 @@
           "type": "string",
           "const": "opener:deny-reveal-item-in-dir",
           "markdownDescription": "Denies the reveal_item_in_dir command without any pre-configured scope."
+        },
+        {
+          "description": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-pick-folder`\n- `allow-forget-folder`\n- `allow-list-folders`\n- `allow-get-folder-info`\n- `allow-read-dir`\n- `allow-stat`\n- `allow-exists`\n- `allow-read-file`\n- `allow-write-file`\n- `allow-read-text-file`\n- `allow-read-text-file-lines`\n- `allow-write-text-file`\n- `allow-append-file`\n- `allow-mkdir`\n- `allow-remove-file`\n- `allow-remove-dir`\n- `allow-copy`\n- `allow-move`\n- `allow-rename`\n- `allow-truncate`",
+          "type": "string",
+          "const": "scoped-storage:default",
+          "markdownDescription": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-pick-folder`\n- `allow-forget-folder`\n- `allow-list-folders`\n- `allow-get-folder-info`\n- `allow-read-dir`\n- `allow-stat`\n- `allow-exists`\n- `allow-read-file`\n- `allow-write-file`\n- `allow-read-text-file`\n- `allow-read-text-file-lines`\n- `allow-write-text-file`\n- `allow-append-file`\n- `allow-mkdir`\n- `allow-remove-file`\n- `allow-remove-dir`\n- `allow-copy`\n- `allow-move`\n- `allow-rename`\n- `allow-truncate`"
+        },
+        {
+          "description": "Enables the append_file command without any pre-configured scope.",
+          "type": "string",
+          "const": "scoped-storage:allow-append-file",
+          "markdownDescription": "Enables the append_file command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the copy command without any pre-configured scope.",
+          "type": "string",
+          "const": "scoped-storage:allow-copy",
+          "markdownDescription": "Enables the copy command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the exists command without any pre-configured scope.",
+          "type": "string",
+          "const": "scoped-storage:allow-exists",
+          "markdownDescription": "Enables the exists command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the forget_folder command without any pre-configured scope.",
+          "type": "string",
+          "const": "scoped-storage:allow-forget-folder",
+          "markdownDescription": "Enables the forget_folder command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the get_folder_info command without any pre-configured scope.",
+          "type": "string",
+          "const": "scoped-storage:allow-get-folder-info",
+          "markdownDescription": "Enables the get_folder_info command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the list_folders command without any pre-configured scope.",
+          "type": "string",
+          "const": "scoped-storage:allow-list-folders",
+          "markdownDescription": "Enables the list_folders command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the mkdir command without any pre-configured scope.",
+          "type": "string",
+          "const": "scoped-storage:allow-mkdir",
+          "markdownDescription": "Enables the mkdir command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the move command without any pre-configured scope.",
+          "type": "string",
+          "const": "scoped-storage:allow-move",
+          "markdownDescription": "Enables the move command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the mv command without any pre-configured scope.",
+          "type": "string",
+          "const": "scoped-storage:allow-mv",
+          "markdownDescription": "Enables the mv command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the pick_folder command without any pre-configured scope.",
+          "type": "string",
+          "const": "scoped-storage:allow-pick-folder",
+          "markdownDescription": "Enables the pick_folder command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the ping command without any pre-configured scope.",
+          "type": "string",
+          "const": "scoped-storage:allow-ping",
+          "markdownDescription": "Enables the ping command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the read_dir command without any pre-configured scope.",
+          "type": "string",
+          "const": "scoped-storage:allow-read-dir",
+          "markdownDescription": "Enables the read_dir command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the read_file command without any pre-configured scope.",
+          "type": "string",
+          "const": "scoped-storage:allow-read-file",
+          "markdownDescription": "Enables the read_file command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the read_text_file command without any pre-configured scope.",
+          "type": "string",
+          "const": "scoped-storage:allow-read-text-file",
+          "markdownDescription": "Enables the read_text_file command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the read_text_file_lines command without any pre-configured scope.",
+          "type": "string",
+          "const": "scoped-storage:allow-read-text-file-lines",
+          "markdownDescription": "Enables the read_text_file_lines command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the readdir command without any pre-configured scope.",
+          "type": "string",
+          "const": "scoped-storage:allow-readdir",
+          "markdownDescription": "Enables the readdir command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the remove_dir command without any pre-configured scope.",
+          "type": "string",
+          "const": "scoped-storage:allow-remove-dir",
+          "markdownDescription": "Enables the remove_dir command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the remove_file command without any pre-configured scope.",
+          "type": "string",
+          "const": "scoped-storage:allow-remove-file",
+          "markdownDescription": "Enables the remove_file command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the rename command without any pre-configured scope.",
+          "type": "string",
+          "const": "scoped-storage:allow-rename",
+          "markdownDescription": "Enables the rename command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the stat command without any pre-configured scope.",
+          "type": "string",
+          "const": "scoped-storage:allow-stat",
+          "markdownDescription": "Enables the stat command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the truncate command without any pre-configured scope.",
+          "type": "string",
+          "const": "scoped-storage:allow-truncate",
+          "markdownDescription": "Enables the truncate command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the write_file command without any pre-configured scope.",
+          "type": "string",
+          "const": "scoped-storage:allow-write-file",
+          "markdownDescription": "Enables the write_file command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the write_text_file command without any pre-configured scope.",
+          "type": "string",
+          "const": "scoped-storage:allow-write-text-file",
+          "markdownDescription": "Enables the write_text_file command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the append_file command without any pre-configured scope.",
+          "type": "string",
+          "const": "scoped-storage:deny-append-file",
+          "markdownDescription": "Denies the append_file command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the copy command without any pre-configured scope.",
+          "type": "string",
+          "const": "scoped-storage:deny-copy",
+          "markdownDescription": "Denies the copy command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the exists command without any pre-configured scope.",
+          "type": "string",
+          "const": "scoped-storage:deny-exists",
+          "markdownDescription": "Denies the exists command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the forget_folder command without any pre-configured scope.",
+          "type": "string",
+          "const": "scoped-storage:deny-forget-folder",
+          "markdownDescription": "Denies the forget_folder command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the get_folder_info command without any pre-configured scope.",
+          "type": "string",
+          "const": "scoped-storage:deny-get-folder-info",
+          "markdownDescription": "Denies the get_folder_info command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the list_folders command without any pre-configured scope.",
+          "type": "string",
+          "const": "scoped-storage:deny-list-folders",
+          "markdownDescription": "Denies the list_folders command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the mkdir command without any pre-configured scope.",
+          "type": "string",
+          "const": "scoped-storage:deny-mkdir",
+          "markdownDescription": "Denies the mkdir command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the move command without any pre-configured scope.",
+          "type": "string",
+          "const": "scoped-storage:deny-move",
+          "markdownDescription": "Denies the move command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the mv command without any pre-configured scope.",
+          "type": "string",
+          "const": "scoped-storage:deny-mv",
+          "markdownDescription": "Denies the mv command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the pick_folder command without any pre-configured scope.",
+          "type": "string",
+          "const": "scoped-storage:deny-pick-folder",
+          "markdownDescription": "Denies the pick_folder command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the ping command without any pre-configured scope.",
+          "type": "string",
+          "const": "scoped-storage:deny-ping",
+          "markdownDescription": "Denies the ping command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the read_dir command without any pre-configured scope.",
+          "type": "string",
+          "const": "scoped-storage:deny-read-dir",
+          "markdownDescription": "Denies the read_dir command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the read_file command without any pre-configured scope.",
+          "type": "string",
+          "const": "scoped-storage:deny-read-file",
+          "markdownDescription": "Denies the read_file command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the read_text_file command without any pre-configured scope.",
+          "type": "string",
+          "const": "scoped-storage:deny-read-text-file",
+          "markdownDescription": "Denies the read_text_file command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the read_text_file_lines command without any pre-configured scope.",
+          "type": "string",
+          "const": "scoped-storage:deny-read-text-file-lines",
+          "markdownDescription": "Denies the read_text_file_lines command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the readdir command without any pre-configured scope.",
+          "type": "string",
+          "const": "scoped-storage:deny-readdir",
+          "markdownDescription": "Denies the readdir command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the remove_dir command without any pre-configured scope.",
+          "type": "string",
+          "const": "scoped-storage:deny-remove-dir",
+          "markdownDescription": "Denies the remove_dir command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the remove_file command without any pre-configured scope.",
+          "type": "string",
+          "const": "scoped-storage:deny-remove-file",
+          "markdownDescription": "Denies the remove_file command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the rename command without any pre-configured scope.",
+          "type": "string",
+          "const": "scoped-storage:deny-rename",
+          "markdownDescription": "Denies the rename command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the stat command without any pre-configured scope.",
+          "type": "string",
+          "const": "scoped-storage:deny-stat",
+          "markdownDescription": "Denies the stat command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the truncate command without any pre-configured scope.",
+          "type": "string",
+          "const": "scoped-storage:deny-truncate",
+          "markdownDescription": "Denies the truncate command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the write_file command without any pre-configured scope.",
+          "type": "string",
+          "const": "scoped-storage:deny-write-file",
+          "markdownDescription": "Denies the write_file command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the write_text_file command without any pre-configured scope.",
+          "type": "string",
+          "const": "scoped-storage:deny-write-text-file",
+          "markdownDescription": "Denies the write_text_file command without any pre-configured scope."
         }
       ]
     },
