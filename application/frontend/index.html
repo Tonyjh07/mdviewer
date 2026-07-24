@@ -1482,8 +1482,10 @@ if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Me
     Object.assign(t.style, { position:'fixed', bottom:'60px', right:'16px', zIndex:'999', padding:'8px 14px', fontSize:'12px', borderRadius:'8px', background:'var(--panel-bg)', color:'var(--text)', boxShadow:'0 2px 10px var(--panel-shadow)', border:'1px solid var(--border)', maxWidth:'260px', lineHeight:'1.4', opacity:'0', transition:'opacity .25s ease' });
     document.body.appendChild(t);
     requestAnimationFrame(() => { t.style.opacity = '1'; });
-    setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, duration);
+    if (duration > 0) setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, duration);
+    return t;
   }
+  function dismissToast(el) { if (el) { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); } }
 
   // Service Worker for offline caching
   if ('serviceWorker' in navigator) {
@@ -1540,15 +1542,15 @@ if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Me
     }
 
     async function restoreScopedSession(session) {
-      showToast('正在恢复上次的会话…');
+      const toastEl = showToast('正在恢复上次的会话…', 0);
       try {
         // 验证 folder ID 是否仍有效（scoped-storage 持久化 handle）
         const handles = await window.__TAURI__.core.invoke('plugin:scoped-storage|list_folders', {});
         const list = handles && (handles.folders || handles.handles || (Array.isArray(handles) ? handles : null));
-        if (!list) { clearSession(); return; }
+        if (!list) { dismissToast(toastEl); clearSession(); return; }
         const arr = Array.isArray(list) ? list : [];
         const match = arr.find(h => h.id === session.folderId);
-        if (!match) { clearSession(); return; }
+        if (!match) { dismissToast(toastEl); clearSession(); return; }
         const mdFiles = await scanScopedFolder(match.id);
         if (mdFiles.length) {
           for (const f of mdFiles) f.__scopedFolderId = match.id;
@@ -1557,7 +1559,8 @@ if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Me
             loadFolderFileByRel(session.activeRelPath);
           }
         } else { clearSession(); }
-      } catch { clearSession(); }
+        dismissToast(toastEl);
+      } catch { dismissToast(toastEl); clearSession(); }
     }
 
     const session = loadSession();
@@ -1571,7 +1574,7 @@ if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Me
               if (d) { render(d.content, d.name); saveSession({ type: 'tauri', name: d.name, path: d.path }); }
             } catch { clearSession(); }
           } else if (session.folderPath) {
-            showToast('正在恢复上次的会话…');
+            const toastEl = showToast('正在恢复上次的会话…', 0);
             try {
               const fd = await window.__TAURI__.core.invoke('scan_folder', { path: session.folderPath });
               if (fd.files && fd.files.length) {
@@ -1580,7 +1583,8 @@ if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Me
                   loadFolderFileByRel(session.activeRelPath);
                 }
               }
-            } catch { clearSession(); }
+              dismissToast(toastEl);
+            } catch { dismissToast(toastEl); clearSession(); }
           }
         }
       }
