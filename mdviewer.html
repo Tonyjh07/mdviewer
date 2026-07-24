@@ -1285,7 +1285,7 @@ if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Me
       if (e.key === 'Escape' && mobileSheet.classList.contains('open')) mobileSheet.classList.remove('open');
     });
 
-    // 侧栏手势：右侧向左滑打开 / 左侧向右滑关闭
+    // 侧栏手势：左边缘向右滑动切换侧栏
     let swipeStartX = 0, swipeStartY = 0;
     document.addEventListener('touchstart', e => {
       if (e.touches.length === 1) { swipeStartX = e.touches[0].clientX; swipeStartY = e.touches[0].clientY; }
@@ -1295,8 +1295,7 @@ if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Me
       const dx = e.changedTouches[0].clientX - swipeStartX;
       const dy = e.changedTouches[0].clientY - swipeStartY;
       if (Math.abs(dy) > 120) return;
-      if (dx < -30 && swipeStartX > window.innerWidth * 0.65 && !sidebarVisible) toggleSidebar();
-      if (dx > 30 && swipeStartX < 40 && sidebarVisible) toggleSidebar();
+      if (dx > 30 && swipeStartX < 40) toggleSidebar();
     }, { passive: true });
   }
 
