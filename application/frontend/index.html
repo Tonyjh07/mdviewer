@@ -545,7 +545,7 @@ function applySettings() {
   document.body.style.fontSize = (s.fontSize || 16) + 'px';
   root.style.setProperty('--lh', s.lineHeight || 1.75);
   const ci = document.getElementById('content-inner');
-  if (ci) ci.style.fontSize = (s.contentFontSize || 100) + '%';
+  if (ci) setContentFontSize(s.contentFontSize || 100);
   root.style.setProperty('--sidebar-font-size', (s.sidebarFontSize || 13) + 'px');
 
   // Swap sidebar tabs
@@ -1442,6 +1442,18 @@ if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Me
 
   // Font-size based zoom for content only
   const contentInner = document.getElementById('content-inner');
+
+  function setContentFontSize(pct) {
+    const ci = contentInner;
+    if (!ci) return;
+    const scrollEl = document.scrollingElement || document.documentElement;
+    const ratio = scrollEl.scrollHeight > scrollEl.clientHeight ? scrollEl.scrollTop / (scrollEl.scrollHeight - scrollEl.clientHeight) : 0;
+    ci.style.fontSize = pct === 100 ? '' : pct + '%';
+    requestAnimationFrame(() => {
+      const max = scrollEl.scrollHeight - scrollEl.clientHeight;
+      if (max > 0) scrollEl.scrollTop = ratio * max;
+    });
+  }
   let pinchDist = 0, pinchFs = 100, lastTap = 0;
   contentInner.addEventListener('touchstart', e => {
     if (e.touches.length === 2) { pinchDist = dist(e.touches); pinchFs = state.settings.contentFontSize || 100; }
@@ -1451,7 +1463,7 @@ if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Me
     e.preventDefault();
     const zoom = Math.round(Math.min(300, Math.max(50, pinchFs * (dist(e.touches) / pinchDist))));
     state.settings.contentFontSize = zoom;
-    contentInner.style.fontSize = zoom + '%';
+    setContentFontSize(zoom);
     saveSettings();
     applyZoomBtn();
   }, { passive: false });
@@ -1463,7 +1475,7 @@ if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Me
     lastTap = now;
   });
   function dist(t) { return Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY); }
-  function resetZoom() { state.settings.contentFontSize = 100; contentInner.style.fontSize = ''; saveSettings(); applyZoomBtn(); }
+  function resetZoom() { state.settings.contentFontSize = 100; setContentFontSize(100); saveSettings(); applyZoomBtn(); }
   function applyZoomBtn() {
     const fs = state.settings.contentFontSize || 100;
     zoomResetBtn.textContent = fs + '%';
