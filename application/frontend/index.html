@@ -2,7 +2,10 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json">
 <link rel="icon" href="favicon.ico" sizes="16x16 32x32">
 <link rel="icon" href="icon-192.png" sizes="192x192">
 <link rel="icon" href="icon-512.png" sizes="512x512">
@@ -88,6 +91,21 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helv
 #dropzone svg { width: 56px; height: 56px; margin-bottom: 16px; opacity: .4; color: var(--text-dim); }
 #dropzone p { font-size: 15px; margin-bottom: 6px; color: var(--text); }
 #dropzone .sub { font-size: 13px; color: var(--text-dim); }
+/* mobile welcome */
+.android #dropzone { display: none; }
+.android-welcome { display: none; flex-direction: column; align-items: center; justify-content: center; padding: 48px 24px; text-align: center; color: var(--text-dim); }
+.android .android-welcome { display: flex; }
+.android-welcome .logo-large { font-size: 28px; font-weight: 700; color: var(--heading); margin-bottom: 8px; }
+.android-welcome .version { font-size: 12px; color: var(--text-dim); margin-bottom: 28px; }
+.android-welcome .action-list { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 280px; }
+.android-welcome .action-item { display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: var(--btn-bg); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 13px; text-decoration: none; cursor: pointer; transition: background .15s; }
+.android-welcome .action-item:active { background: var(--btn-hover); }
+.android-welcome .action-item svg { width: 22px; height: 22px; flex-shrink: 0; color: var(--link); }
+.android-welcome .action-item .action-text { flex: 1; text-align: left; }
+.android-welcome .action-item .action-text strong { display: block; font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+.android-welcome .action-item .action-text span { font-size: 11px; color: var(--text-dim); }
+.android-welcome .feature-list { margin-top: 24px; font-size: 12px; line-height: 1.8; color: var(--text-dim); max-width: 260px; }
+.android-welcome .feature-list svg { width: 14px; height: 14px; vertical-align: middle; margin-right: 4px; color: var(--link); }
 /* ---- Typography ---- */
 #content-inner h1, #content-inner h2, #content-inner h3, #content-inner h4, #content-inner h5 { color: var(--heading); font-weight: 600; line-height: 1.35; margin-top: 1.8em; margin-bottom: .5em; }
 #content-inner h1 { font-size: 1.85em; padding-bottom: .3em; border-bottom: 1px solid var(--h-border); margin-top: 0; }
@@ -163,17 +181,44 @@ input[type="range"] { width: 100%; margin: 4px 0; accent-color: var(--btn-primar
 #loading.show { display: flex; align-items: center; gap: 8px; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .spinner { width: 14px; height: 14px; border: 2px solid var(--border); border-top-color: var(--link); border-radius: 50%; animation: spin .6s linear infinite; }
+#sidebar-overlay { display: none; }
 /* responsive */
 @media (max-width: 768px) {
   #toolbar { padding: 0 6px; gap: 3px; }
   #toolbar button { padding: 5px 7px; font-size: 11.5px; }
   .logo { font-size: 13px; }
-  #sidebar { position: fixed; top: 48px; bottom: 0; left: 0; z-index: 90; width: 240px; box-shadow: 4px 0 12px var(--panel-shadow); }
+  #sidebar { position: fixed; top: 48px; bottom: 0; left: 0; z-index: 90; width: 260px; box-shadow: 4px 0 12px var(--panel-shadow); }
   #content { padding: 24px 16px; }
+  #sidebar.open + #sidebar-overlay { display: block; }
 }
 @media (max-width: 480px) {
   #content { padding: 16px 12px; }
 }
+/* Android touch: larger hit targets, always-show toolbar, drawer sidebar */
+.android #toolbar button, .android .btn { min-height: 44px; padding: 8px 12px; font-size: 13px; }
+.android #sidebar { width: 280px; top: 0; z-index: 200; transition: transform .25s ease; transform: translateX(-100%); }
+.android #sidebar.open { transform: translateX(0); }
+.android #sidebar-overlay { display: none; position: fixed; inset: 0; z-index: 199; background: var(--overlay-bg); }
+.android #sidebar.open + #sidebar-overlay { display: block; }
+.android #toolbar.hide { top: 0; }
+.android #sidebar.full { top: 0; }
+/* safe area (Android status bar) */
+.android #toolbar { padding-top: calc(0px + env(safe-area-inset-top, 0px)); height: calc(48px + env(safe-area-inset-top, 0px)); }
+.android #sidebar { padding-top: env(safe-area-inset-top, 0px); }
+/* settings panel: avoid overlap with Android status bar */
+.android .settings-panel { padding-top: env(safe-area-inset-top, 0px); }
+/* mobile action sheet */
+.mobile-sheet { display: none; }
+.android .mobile-sheet { display: block; position: fixed; left: 0; right: 0; bottom: 0; z-index: 300; background: var(--panel-bg); border-top: 1px solid var(--border); box-shadow: 0 -4px 20px var(--panel-shadow); transform: translateY(100%); transition: transform .25s ease; touch-action: pan-x; }
+.android .mobile-sheet.open { transform: translateY(0); }
+.mobile-sheet-content { padding: 8px 0 max(8px, env(safe-area-inset-bottom, 0px)); }
+.mobile-sheet-items { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 0 8px; }
+.mobile-sheet-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px 4px; background: none; border: none; color: var(--text); font-size: 11px; cursor: pointer; border-radius: 8px; min-height: 56px; }
+.mobile-sheet-btn:active { background: var(--btn-bg); }
+.mobile-sheet-handle { width: 36px; height: 4px; border-radius: 2px; background: var(--border); margin: 8px auto 0; }
+.android #menuBtn { display: inline-flex; }
+/* disable pinch-zoom on chrome elements */
+#toolbar, #sidebar, .overlay, #sidebar-overlay, #dropzone { touch-action: pan-x pan-y; }
 /* print */
 @media print {
   #toolbar, #sidebar, .overlay, #loading, #dropzone { display: none !important; }
@@ -193,13 +238,27 @@ input[type="range"] { width: 100%; margin: 4px 0; accent-color: var(--btn-primar
     <div id="fileName"></div>
     <div class="toolbar-group">
       <button id="openBtn" title="打开 .md 文件">打开</button>
-      <button id="folderBtn" title="打开文件夹">文件夹</button>
-      <button id="urlBtn" title="从 URL 导入">URL</button>
+      <button id="folderBtn" title="打开文件�?>文件�?/button>
+      <button id="urlBtn" title="�?URL 导入">URL</button>
       <button id="sidebarBtn" title="侧栏">侧栏</button>
       <button id="settingsBtn" title="选项">选项</button>
       <a href="https://github.com/Tonyjh07/mdviewer" target="_blank" rel="noopener noreferrer" class="github-icon" title="GitHub" aria-label="GitHub 仓库"><svg viewBox="0 0 24 24" width="27" height="27" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg></a>
+      <button id="menuBtn" title="更多" style="display:none"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></button>
     </div>
   </header>
+  <div id="mobileSheet" class="mobile-sheet">
+    <div class="mobile-sheet-content">
+      <div class="mobile-sheet-items">
+        <button class="mobile-sheet-btn" data-action="openFile"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg><span>打开文件</span></button>
+        <button class="mobile-sheet-btn" data-action="openFolder"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg><span>打开文件�?/span></button>
+        <button class="mobile-sheet-btn" data-action="url"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><span>URL</span></button>
+        <button class="mobile-sheet-btn" data-action="sidebar"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg><span>侧栏</span></button>
+        <button class="mobile-sheet-btn" data-action="settings"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>选项</span></button>
+        <a href="https://github.com/Tonyjh07/mdviewer" target="_blank" rel="noopener noreferrer" class="mobile-sheet-btn" data-action="github" style="text-decoration:none"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg><span>GitHub</span></a>
+      </div>
+      <div class="mobile-sheet-handle"></div>
+    </div>
+  </div>
   <div id="main">
     <aside id="sidebar">
       <div class="sidebar-tabs">
@@ -207,7 +266,7 @@ input[type="range"] { width: 100%; margin: 4px 0; accent-color: var(--btn-primar
         <button class="sidebar-tab" data-panel="toc">目录</button>
       </div>
       <div id="filesPanel" class="sidebar-panel active">
-        <div id="noFolderMsg" style="padding:32px 16px;text-align:center;color:var(--text-dim);font-size:13px;">打开文件夹后<br>文件列表将显示在此</div>
+        <div id="noFolderMsg" style="padding:32px 16px;text-align:center;color:var(--text-dim);font-size:13px;">打开文件夹后<br>文件列表将显示在�?/div>
         <div id="fileTree" class="tree" style="display:none"></div>
       </div>
       <div id="tocPanel" class="sidebar-panel"></div>
@@ -218,12 +277,36 @@ input[type="range"] { width: 100%; margin: 4px 0; accent-color: var(--btn-primar
         <div id="dropzone">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
           <p>拖入 Markdown 文件，或点击上方按钮</p>
-          <div class="sub">支持 .md 文件 / 文件夹 / URL 导入 / LaTeX 公式渲染</div>
+          <div class="sub">支持 .md 文件 / 文件�?/ URL 导入 / LaTeX 公式渲染</div>
+        </div>
+        <div class="android-welcome">
+          <div class="logo-large">mdviewer</div>
+          <div class="version">v0.3.1</div>
+          <div class="action-list">
+            <button class="action-item" data-action="openFile">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+              <div class="action-text"><strong>打开文件</strong><span>选择本机 .md 文件</span></div>
+            </button>
+            <button class="action-item" data-action="openFolder">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+              <div class="action-text"><strong>打开文件�?/strong><span>浏览文件夹中�?Markdown 文件</span></div>
+            </button>
+            <button class="action-item" data-action="url">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+              <div class="action-text"><strong>URL 导入</strong><span>从网络链接加�?Markdown</span></div>
+            </button>
+          </div>
+          <div class="feature-list">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg> 支持 LaTeX 公式 / Mermaid 图表<br>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg> 多主�?/ 字体缩放 / 会话保存<br>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg> 支持离线缓存（PWA�?br>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg> �?从左侧边缘右滑打开侧栏
+          </div>
         </div>
       </div>
     </main>
   </div>
-  <div id="loading"><div class="spinner"></div><span>渲染中...</span></div>
+  <div id="loading"><div class="spinner"></div><span>渲染�?..</span></div>
 </div>
 
 <div id="settingsOverlay" class="overlay">
@@ -244,11 +327,11 @@ input[type="range"] { width: 100%; margin: 4px 0; accent-color: var(--btn-primar
           <button class="opt-btn" data-value="monokai">Monokai</button>
           <button class="opt-btn" data-value="solarized">Solarized</button>
           <button class="opt-btn" data-value="solarized-dark">Solarized Dark</button>
-          <button class="opt-btn" data-value="custom">自定义</button>
+          <button class="opt-btn" data-value="custom">自定�?/button>
         </div>
       </div>
       <div class="setting-group" id="customColorsGroup" style="display:none">
-        <label>自定义颜色</label>
+        <label>自定义颜�?/label>
         <div class="color-grid">
           <div class="color-item"><label>背景</label><input type="color" id="cBg"></div>
           <div class="color-item"><label>文字</label><input type="color" id="cText"></div>
@@ -277,7 +360,7 @@ input[type="range"] { width: 100%; margin: 4px 0; accent-color: var(--btn-primar
       <div class="setting-group">
         <label>字体</label>
         <div class="setting-row" id="fontFamilyGroup">
-          <button class="opt-btn" data-value="sans">无衬线</button>
+          <button class="opt-btn" data-value="sans">无衬�?/button>
           <button class="opt-btn" data-value="serif">衬线</button>
           <button class="opt-btn" data-value="mono">等宽</button>
         </div>
@@ -285,9 +368,9 @@ input[type="range"] { width: 100%; margin: 4px 0; accent-color: var(--btn-primar
       <div class="setting-group">
         <label>内容宽度</label>
         <div class="setting-row" id="widthGroup">
-          <button class="opt-btn" data-value="narrow">窄</button>
-          <button class="opt-btn" data-value="medium">中</button>
-          <button class="opt-btn" data-value="wide">宽</button>
+          <button class="opt-btn" data-value="narrow">�?/button>
+          <button class="opt-btn" data-value="medium">�?/button>
+          <button class="opt-btn" data-value="wide">�?/button>
           <button class="opt-btn" data-value="full">全宽</button>
         </div>
       </div>
@@ -296,7 +379,7 @@ input[type="range"] { width: 100%; margin: 4px 0; accent-color: var(--btn-primar
         <input type="range" id="sidebarFontSizeRange" min="10" max="24" value="13" step="1">
       </div>
       <div class="setting-group" style="border-top:1px solid var(--border);padding-top:14px;">
-        <label>快捷键（点击修改）</label>
+        <label>快捷键（点击修改�?/label>
         <div class="shortcut-list" id="shortcutList"></div>
       </div>
       <div class="setting-group" style="border-top:1px solid var(--border);padding-top:14px;">
@@ -306,7 +389,19 @@ input[type="range"] { width: 100%; margin: 4px 0; accent-color: var(--btn-primar
         </label>
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:13px;margin-top:8px;">
           <input type="checkbox" id="swapTabsCb" style="accent-color:var(--btn-primary);width:16px;height:16px;cursor:pointer;">
-          调换侧栏选项卡顺序
+          调换侧栏选项卡顺�?
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:13px;margin-top:8px;">
+          <input type="checkbox" id="swipeSidebarCb" style="accent-color:var(--btn-primary);width:16px;height:16px;cursor:pointer;">
+          滑动打开侧栏
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:13px;margin-top:8px;">
+          <input type="checkbox" id="saveSessionCb" style="accent-color:var(--btn-primary);width:16px;height:16px;cursor:pointer;">
+          保存会话
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:13px;margin-top:8px;">
+          <input type="checkbox" id="autoDarkCb" style="accent-color:var(--btn-primary);width:16px;height:16px;cursor:pointer;">
+          自动暗色模式
         </label>
       </div>
     </div>
@@ -315,7 +410,7 @@ input[type="range"] { width: 100%; margin: 4px 0; accent-color: var(--btn-primar
 
 <div id="urlOverlay" class="overlay">
   <div class="dialog">
-    <h3>从 URL 导入</h3>
+    <h3>�?URL 导入</h3>
     <input type="url" id="urlInput" placeholder="https://raw.githubusercontent.com/..." autocomplete="off">
     <div class="dialog-actions">
       <button class="btn btn-primary" id="urlFetchBtn">获取</button>
@@ -354,6 +449,8 @@ const state = {
   folderPath: '',        // Tauri: 已打开文件夹的路径
   settings: loadSettings()
 };
+const isAndroid = /Android/i.test(navigator.userAgent);
+const isDesktopTauri = window.__TAURI__ && !isAndroid;
 
 // ---- settings persistence ----
 function loadSettings() {
@@ -366,6 +463,7 @@ function saveSettings() {
 
 // ---- session persistence (last opened file) ----
 function saveSession(data) {
+  if (state.settings.saveSession === false) return;
   data.sidebarVisible = sidebarVisible;
   const activeTabEl = document.querySelector('.sidebar-tab.active');
   data.activeTab = activeTabEl ? activeTabEl.dataset.panel : 'toc';
@@ -393,7 +491,7 @@ function restoreSidebarSession(session) {
 // ---- keyboard shortcuts ----
 const SHORTCUT_ACTIONS = [
   { id: 'openFile', label: '打开文件', default: 'Ctrl+O' },
-  { id: 'openFolder', label: '打开文件夹', default: 'Ctrl+Shift+O' },
+  { id: 'openFolder', label: '打开文件�?, default: 'Ctrl+Shift+O' },
   { id: 'toggleSidebar', label: '切换侧栏', default: 'Ctrl+B' },
   { id: 'openUrl', label: '打开 URL', default: 'Ctrl+U' },
   { id: 'openSettings', label: '打开选项', default: 'Ctrl+,' },
@@ -435,7 +533,12 @@ function applySettings() {
   const s = state.settings;
   const root = document.documentElement;
 
-  root.dataset.theme = s.theme || 'light';
+  // Auto dark mode: override theme when using light/dark
+  let theme = s.theme || 'light';
+  if (s.autoDarkMode && (theme === 'light' || theme === 'dark')) {
+    theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  root.dataset.theme = theme;
 
   // Custom colors override
   if (s.theme === 'custom' && s.customColors) {
@@ -459,6 +562,11 @@ function applySettings() {
   document.body.style.fontFamily = fonts[s.fontFamily] || fonts.sans;
   document.body.style.fontSize = (s.fontSize || 16) + 'px';
   root.style.setProperty('--lh', s.lineHeight || 1.75);
+  const ci = document.getElementById('content-inner');
+  if (ci) {
+    const fs = s.contentFontSize || 100;
+    ci.style.fontSize = fs === 100 ? '' : fs + '%';
+  }
   root.style.setProperty('--sidebar-font-size', (s.sidebarFontSize || 13) + 'px');
 
   // Swap sidebar tabs
@@ -473,6 +581,7 @@ function applySettings() {
   applyCodeTheme(s.codeTheme || 'auto');
   syncSettingUI();
   syncCustomColorInputs();
+  if (typeof applyZoomBtn === 'function') applyZoomBtn();
 }
 
 function applyCodeTheme(mode) {
@@ -530,6 +639,9 @@ function syncSettingUI() {
   document.getElementById('sidebarFontSizeValue').textContent = (s.sidebarFontSize || 13) + 'px';
   document.getElementById('alwaysToolbarCb').checked = !!s.alwaysShowToolbar;
   document.getElementById('swapTabsCb').checked = !!s.swapSidebarTabs;
+  document.getElementById('swipeSidebarCb').checked = s.swipeSidebar !== false;
+  document.getElementById('saveSessionCb').checked = s.saveSession !== false;
+  document.getElementById('autoDarkCb').checked = !!s.autoDarkMode;
   renderShortcutList();
 }
 
@@ -565,12 +677,12 @@ function protectMath(md) {
   // Split by fenced code blocks to avoid matching $ inside them
   const parts = md.split(/(```[\s\S]*?```)/);
   const processed = parts.map((part, i) => {
-    if (i % 2 === 1) return part; // code block — leave as-is
+    if (i % 2 === 1) return part; // code block �?leave as-is
     let t = part;
     // block math $$...$$ and \[...\]
     t = t.replace(/\$\$([\s\S]+?)\$\$/g, (_, e) => { const id = `\x00M_${blocks.length}\x00`; blocks.push({ d:1, e:e.trim() }); return id; });
     t = t.replace(/\\\[([\s\S]+?)\\\]/g, (_, e) => { const id = `\x00M_${blocks.length}\x00`; blocks.push({ d:1, e:e.trim() }); return id; });
-    // inline math $...$ (multiline, but not inside code blocks — already protected above)
+    // inline math $...$ (multiline, but not inside code blocks �?already protected above)
     t = t.replace(/\$([\s\S]+?)\$/g, (_, e) => { const id = `\x00M_${blocks.length}\x00`; blocks.push({ d:0, e:e.trim() }); return id; });
     // inline math \(...\)
     t = t.replace(/\\\((.+?)\\\)/g, (_, e) => { const id = `\x00M_${blocks.length}\x00`; blocks.push({ d:0, e:e.trim() }); return id; });
@@ -622,12 +734,14 @@ function render(markdown, name) {
   const contentBody = document.getElementById('content-body');
   const dropzone = document.getElementById('dropzone');
   const loading = document.getElementById('loading');
+  const androidWelcome = document.querySelector('.android-welcome');
 
   if (renderTimeout) { clearTimeout(renderTimeout); renderTimeout = null; }
 
   if (!markdown) {
     contentBody.innerHTML = '';
     dropzone.style.display = '';
+    if (androidWelcome) androidWelcome.style.display = '';
     document.getElementById('fileName').textContent = '';
     rebuildToc([]);
     return;
@@ -638,6 +752,7 @@ function render(markdown, name) {
     renderTimeout = null;
     try {
       dropzone.style.display = 'none';
+      if (androidWelcome) androidWelcome.style.display = 'none';
       const { text, blocks } = protectMath(markdown);
       let html = marked.parse(text);
       html = html.replace(/\x00M_(\d+)\x00/g, (_, idx) => {
@@ -789,12 +904,13 @@ function loadFolder(files, folderPath) {
       const entry = { name, relPath };
       if (f.fullPath) entry.fullPath = f.fullPath;
       else if (f.full_path) entry.fullPath = f.full_path;
+      else if (f.__scopedFolderId) { entry.__scopedFolderId = f.__scopedFolderId; }
       else if (file && !f.file) entry.file = file;
       else if (f.file) entry.file = f.file;
       mdFiles.push(entry);
     }
   }
-  if (!mdFiles.length) { alert('文件夹中未找到 .md 文件'); return; }
+  if (!mdFiles.length) { alert('文件夹中未找�?.md 文件'); return; }
 
   mdFiles.sort((a, b) => a.relPath.localeCompare(b.relPath));
   state.folderFiles = mdFiles;
@@ -807,8 +923,11 @@ function loadFolder(files, folderPath) {
   switchSidebarTab('files');
 
   loadFolderFileByRel(state.folderFiles[0].relPath);
-  if (window.__TAURI__ && folderPath) {
+  const firstFile = state.folderFiles[0];
+  if (isDesktopTauri && folderPath) {
     saveSession({ type: 'tauri', folderPath, activeRelPath: state.folderFiles[0].relPath });
+  } else if (firstFile && firstFile.__scopedFolderId) {
+    saveSession({ type: 'scoped', folderId: firstFile.__scopedFolderId, folderName: folderPath, activeRelPath: state.folderFiles[0].relPath });
   } else {
     saveSession(loadSession() || {});
   }
@@ -890,11 +1009,23 @@ function loadFolderFileByRel(relPath) {
     el.classList.toggle('active', el.dataset.rel === relPath);
   });
 
-  if ((item.fullPath || item.full_path) && window.__TAURI__) {
+  if (item.__scopedFolderId) {
     const seq = ++loadSeq;
-    window.__TAURI__.core.invoke('read_file', { path: item.fullPath || item.full_path }).then(data => {
+    window.__TAURI__.core.invoke('plugin:scoped-storage|read_text_file', {
+      req: { folderId: item.__scopedFolderId, path: item.relPath }
+    }).then(result => {
       if (seq !== loadSeq) return;
-      if (data) render(data.content, item.relPath);
+      if (result && result.contents) render(result.contents, item.relPath);
+    }).catch(() => {});
+  } else if ((item.fullPath || item.full_path) && (isDesktopTauri || window.__TAURI__)) {
+    const seq = ++loadSeq;
+    const path = item.fullPath || item.full_path;
+    (path.startsWith('content://') ? window.__TAURI__.fs.readTextFile(path) : window.__TAURI__.core.invoke('read_file', { path })).then(data => {
+      if (seq !== loadSeq) return;
+      if (data) {
+        if (typeof data === 'string') render(data, item.relPath);
+        else render(data.content, item.relPath);
+      }
     }).catch(() => {});
   } else if (item.file) {
     const seq = ++loadSeq;
@@ -906,8 +1037,10 @@ function loadFolderFileByRel(relPath) {
     reader.readAsText(item.file);
   }
 
-  if (window.__TAURI__ && state.folderPath) {
+  if (isDesktopTauri && state.folderPath) {
     saveSession({ type: 'tauri', folderPath: state.folderPath, activeRelPath: relPath });
+  } else if (window.__TAURI__ && item.__scopedFolderId) {
+    saveSession({ type: 'scoped', folderId: item.__scopedFolderId, folderName: state.folderPath, activeRelPath: relPath });
   } else {
     saveSession(loadSession() || {});
   }
@@ -925,7 +1058,7 @@ let urlLoadSeq = 0;
 
 function fetchUrl(url) {
   if (!url) return;
-  // GitHub blob → raw.githubusercontent.com
+  // GitHub blob �?raw.githubusercontent.com
   url = url.replace(/^https?:\/\/(?:www\.)?github\.com\/([^/]+\/[^/]+)\/blob\//i, 'https://raw.githubusercontent.com/$1/');
   const seq = ++urlLoadSeq;
   document.getElementById('loading').classList.add('show');
@@ -971,7 +1104,7 @@ function closeUrl() { document.getElementById('urlOverlay').classList.remove('op
 function init() {
   // File open
   document.getElementById('openBtn').addEventListener('click', async () => {
-    if (window.__TAURI__) {
+    if (isDesktopTauri) {
       const path = await window.__TAURI__.dialog.open({
         filters: [{ name: 'Markdown', extensions: ['md', 'markdown', 'mdown'] }]
       });
@@ -989,17 +1122,99 @@ function init() {
   });
 
   // Folder open
-  document.getElementById('folderBtn').addEventListener('click', async () => {
-    if (window.__TAURI__) {
-      const folderPath = await window.__TAURI__.dialog.open({ directory: true });
-      if (folderPath) {
-        const fd = await window.__TAURI__.core.invoke('scan_folder', { path: folderPath });
-        loadFolder(fd.files, folderPath);
-      }
-    } else {
-      document.getElementById('folderInput').click();
+  async function pickFolder() {
+    function toast(msg) {
+      const t = document.createElement('div');
+      t.textContent = msg;
+      Object.assign(t.style, { position:'fixed', bottom:'80px', left:'50%', transform:'translateX(-50%)', background:'var(--panel-bg)', color:'var(--text)', padding:'10px 20px', borderRadius:'8px', boxShadow:'0 2px 12px var(--panel-shadow)', zIndex:'999', fontSize:'13px', border:'1px solid var(--border)' });
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 3000);
     }
-  });
+    // 1) Scoped-storage plugin (Android SAF via pickFolder + readDir)
+    if (window.__TAURI__ && isAndroid) {
+      toast('正在打开文件夹选择器�?);
+      try {
+        const folder = await window.__TAURI__.core.invoke('plugin:scoped-storage|pick_folder', {});
+        const handle = folder && (folder.folder || folder);
+        if (handle && handle.id) {
+          toast('正在扫描文件夹�?);
+          const mdFiles = await scanScopedFolder(handle.id);
+          if (mdFiles.length) {
+            for (const f of mdFiles) f.__scopedFolderId = handle.id;
+            loadFolder(mdFiles, handle.name || '');
+            return;
+          }
+          toast('文件夹中没有 .md 文件');
+          return;
+        }
+        return;
+      } catch (e) {
+        const msg = (e && e.message) || (e && e.code) || String(e);
+        console.error('Scoped storage:', e);
+        if (!msg.includes('CANCELLED') && !msg.includes('cancelled')) {
+          toast('文件夹选择失败: ' + msg);
+        }
+        return;
+      }
+    }
+    // 2) Tauri dialog + fs.readDir (desktop only)
+    if (window.__TAURI__ && isDesktopTauri) {
+      try {
+        const dirPath = await window.__TAURI__.dialog.open({ directory: true });
+        if (dirPath) {
+          const entries = await window.__TAURI__.fs.readDir(dirPath);
+          const mdFiles = entries.filter(e => !e.children && /\.(md|markdown|mdown)$/i.test(e.name));
+          if (mdFiles.length) {
+            const mapped = mdFiles.map(e => ({ name: e.name, relPath: e.name, fullPath: e.path }));
+            const folderName = dirPath.replace(/[/\\]+$/, '').split(/[/\\]/).pop() || dirPath;
+            loadFolder(mapped, folderName);
+            return;
+          }
+          toast('文件夹中没有 .md 文件');
+          return;
+        }
+        return;
+      } catch (e) { console.error('Tauri folder:', e); }
+    }
+    // 3) showDirectoryPicker
+        if (window.showDirectoryPicker) {
+      try {
+        const dir = await window.showDirectoryPicker();
+        const entries = [];
+        for await (const entry of dir.values()) {
+          if (entry.kind === 'file' && /\.md$/i.test(entry.name)) {
+            const file = await entry.getFile();
+            entries.push({ file, name: entry.name, rel_path: entry.name });
+          }
+        }
+        if (entries.length) { loadFolder(entries, dir.name); return; }
+      } catch (e) { if (e.name !== 'AbortError') console.error('showDirectoryPicker:', e); }
+    }
+    // 4) webkitdirectory fallback
+    const fi = document.getElementById('folderInput');
+    fi.click();
+    setTimeout(() => { if (!fi.files.length) toast('文件夹选择不可用，请使�?URL 导入'); }, 1200);
+  }
+
+  async function scanScopedFolder(folderId, basePath = '', maxDepth = 10) {
+    const res = await window.__TAURI__.core.invoke('plugin:scoped-storage|read_dir', {
+      req: { folderId, path: basePath || undefined }
+    });
+    const raw = res && (Array.isArray(res) ? res : res.entries);
+    const entries = Array.isArray(raw) ? raw : [];
+    const files = [];
+    for (const entry of entries) {
+      if (entry.isFile && /\.(md|markdown|mdown)$/i.test(entry.name)) {
+        files.push({ name: entry.name, relPath: entry.path });
+      } else if (entry.isDir && maxDepth > 1) {
+        const sub = await scanScopedFolder(folderId, entry.path, maxDepth - 1);
+        files.push(...sub);
+        if (files.length >= 2000) break;
+      }
+    }
+    return files;
+  }
+  document.getElementById('folderBtn').addEventListener('click', pickFolder);
   document.getElementById('folderInput').addEventListener('change', e => {
     if (e.target.files.length) loadFolder(e.target.files);
     e.target.value = '';
@@ -1036,7 +1251,7 @@ function init() {
       if (file) {
         loadFile(file);
         // WebView2 可能提供非标准的 file.path
-        if (window.__TAURI__ && file.path && file.name.match(/\.(md|markdown|mdown)$/i)) {
+        if (isDesktopTauri && file.path && file.name.match(/\.(md|markdown|mdown)$/i)) {
           saveSession({ type: 'tauri', name: file.name, path: file.path });
         }
       }
@@ -1122,6 +1337,21 @@ function init() {
     state.settings.swapSidebarTabs = e.target.checked; saveSettings(); applySettings();
   });
 
+  // Swipe sidebar checkbox
+  document.getElementById('swipeSidebarCb').addEventListener('change', e => {
+    state.settings.swipeSidebar = e.target.checked; saveSettings();
+  });
+
+  // Save session checkbox
+  document.getElementById('saveSessionCb').addEventListener('change', e => {
+    state.settings.saveSession = e.target.checked; saveSettings();
+  });
+
+  // Auto dark mode checkbox
+  document.getElementById('autoDarkCb').addEventListener('change', e => {
+    state.settings.autoDarkMode = e.target.checked; saveSettings(); applySettings();
+  });
+
   // Scroll: hide toolbar on down, show on up (desktop only)
   let lastScrollY = 0;
   window.addEventListener('scroll', () => {
@@ -1165,8 +1395,8 @@ if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Me
       if (shortcutMatch(e, s)) {
         e.preventDefault();
         switch (action) {
-          case 'openFile': window.__TAURI__ ? document.getElementById('openBtn').click() : document.getElementById('fileInput').click(); break;
-          case 'openFolder': window.__TAURI__ ? document.getElementById('folderBtn').click() : document.getElementById('folderInput').click(); break;
+          case 'openFile': isDesktopTauri ? document.getElementById('openBtn').click() : document.getElementById('fileInput').click(); break;
+          case 'openFolder': isDesktopTauri ? document.getElementById('folderBtn').click() : document.getElementById('folderInput').click(); break;
           case 'toggleSidebar': toggleSidebar(); break;
           case 'openUrl': openUrl(); break;
           case 'openSettings': openSettings(); break;
@@ -1179,14 +1409,173 @@ if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Me
     }
   });
 
+  // Android: 固定顶栏 + 侧栏 Drawer 遮罩 + 二级菜单
+  if (isAndroid) {
+    document.documentElement.classList.add('android');
+    state.settings.alwaysShowToolbar = true;
+    const overlay = document.createElement('div');
+    overlay.id = 'sidebar-overlay';
+    document.getElementById('sidebar').after(overlay);
+    overlay.addEventListener('click', () => { if (sidebarVisible) toggleSidebar(); });
+
+    // Remove toolbar buttons, show only menu
+    ['openBtn','folderBtn','sidebarBtn','urlBtn','settingsBtn'].forEach(id => document.getElementById(id).style.display = 'none');
+    document.querySelector('.github-icon').style.display = 'none';
+    document.getElementById('menuBtn').style.display = '';
+    // fileName 居中
+    document.getElementById('fileName').style.textAlign = 'center';
+
+    // Mobile action sheet
+    const mobileSheet = document.getElementById('mobileSheet');
+    document.getElementById('menuBtn').addEventListener('click', () => mobileSheet.classList.toggle('open'));
+    function handleMobileAction(action) {
+      if (action === 'openFile') { document.getElementById('fileInput').click(); }
+      else if (action === 'openFolder') pickFolder();
+      else if (action === 'url') openUrl();
+      else if (action === 'sidebar') toggleSidebar();
+      else if (action === 'settings') openSettings();
+      else if (action === 'github') { if (window.__TAURI__) window.__TAURI__.opener.openUrl('https://github.com/Tonyjh07/mdviewer'); else window.open('https://github.com/Tonyjh07/mdviewer', '_blank'); }
+    }
+    mobileSheet.querySelectorAll('.mobile-sheet-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        mobileSheet.classList.remove('open');
+        handleMobileAction(btn.dataset.action);
+      });
+    });
+    // Welcome screen action buttons
+    document.querySelectorAll('.android-welcome .action-item').forEach(btn => {
+      btn.addEventListener('click', () => handleMobileAction(btn.dataset.action));
+    });
+    // Close sheet on content tap
+    document.getElementById('content').addEventListener('click', () => {
+      if (mobileSheet.classList.contains('open')) mobileSheet.classList.remove('open');
+    });
+    // Close sheet on Escape key
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && mobileSheet.classList.contains('open')) mobileSheet.classList.remove('open');
+    });
+
+    // 侧栏手势：左边缘向右滑动切换侧栏
+    let swipeStartX = 0, swipeStartY = 0;
+    document.addEventListener('touchstart', e => {
+      if (e.touches.length === 1) { swipeStartX = e.touches[0].clientX; swipeStartY = e.touches[0].clientY; }
+    }, { passive: true });
+    document.addEventListener('touchend', e => {
+      if (state.settings.swipeSidebar === false) return;
+      if (e.changedTouches.length !== 1) return;
+      const dx = e.changedTouches[0].clientX - swipeStartX;
+      const dy = e.changedTouches[0].clientY - swipeStartY;
+      if (Math.abs(dy) > 120) return;
+      const sb = document.getElementById('sidebar');
+      const touchX = e.changedTouches[0].clientX;
+      // 侧栏已打开：在侧栏上左滑，或在遮罩上任意方向滑动→关闭
+      if (sb.classList.contains('open')) {
+        if (dx < -30) { toggleSidebar(); }
+        else if (touchX > 280 && Math.abs(dx) > 30) { toggleSidebar(); }
+      } else {
+        // 侧栏关闭：左侧边缘右滑→打开
+        if (dx > 30 && swipeStartX < window.innerWidth / 3) toggleSidebar();
+      }
+    }, { passive: true });
+  }
+
+  // Font-size based zoom for content only
+  const contentInner = document.getElementById('content-inner');
+
   applySettings();
   if (typeof mermaid !== 'undefined') {
     mermaid.initialize({ startOnLoad: false });
   }
 
-  // Tauri desktop
+  // Auto dark mode: listen for system color scheme changes
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    if (state.settings.autoDarkMode) applySettings();
+  });
+
+  function setContentFontSize(pct) {
+    const ci = contentInner;
+    if (!ci) return;
+    const scrollEl = document.scrollingElement || document.documentElement;
+    // 记忆视口顶部锚元素及其旧位置（跳�?sticky toolbar�?
+    let anchor = null, oldTop = 0;
+    const tb = document.getElementById('toolbar');
+    const y = tb ? tb.offsetHeight + 1 : 1;
+    const topEl = document.elementFromPoint(scrollEl.clientWidth / 2, y);
+    if (topEl && ci.contains(topEl)) {
+      anchor = topEl;
+      oldTop = anchor.getBoundingClientRect().top;
+    }
+    ci.style.fontSize = pct === 100 ? '' : pct + '%';
+    requestAnimationFrame(() => {
+      if (anchor) {
+        const newTop = anchor.getBoundingClientRect().top;
+        scrollEl.scrollTop += newTop - oldTop;
+      }
+    });
+  }
+  let pinchDist = 0, pinchFs = 100, lastTap = 0;
+  contentInner.addEventListener('touchstart', e => {
+    if (e.touches.length === 2) { pinchDist = dist(e.touches); pinchFs = state.settings.contentFontSize || 100; }
+  }, { passive: true });
+  contentInner.addEventListener('touchmove', e => {
+    if (e.touches.length !== 2) return;
+    e.preventDefault();
+    const zoom = Math.round(Math.min(300, Math.max(50, pinchFs * (dist(e.touches) / pinchDist))));
+    state.settings.contentFontSize = zoom;
+    setContentFontSize(zoom);
+    saveSettings();
+    applyZoomBtn();
+  }, { passive: false });
+  contentInner.addEventListener('touchend', e => {
+    if (e.changedTouches.length === 1 && e.changedTouches[0].screenX < 60) return;
+    if (e.touches.length) return;
+    const now = Date.now();
+    if (now - lastTap < 300 && (state.settings.contentFontSize || 100) !== 100) { resetZoom(); }
+    lastTap = now;
+  });
+  function dist(t) { return Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY); }
+  function resetZoom() { state.settings.contentFontSize = 100; setContentFontSize(100); saveSettings(); applyZoomBtn(); }
+  function applyZoomBtn() {
+    const fs = state.settings.contentFontSize || 100;
+    zoomResetBtn.textContent = fs + '%';
+    zoomResetBtn.style.display = fs === 100 ? 'none' : '';
+  }
+  const zoomResetBtn = document.createElement('button');
+  zoomResetBtn.id = 'zoomResetBtn';
+  Object.assign(zoomResetBtn.style, { position:'fixed', bottom:'16px', right:'16px', zIndex:'999', padding:'6px 12px', fontSize:'13px', border:'1px solid var(--border)', borderRadius:'20px', background:'var(--toolbar-bg)', color:'var(--text)', cursor:'pointer', display:'none', boxShadow:'0 2px 8px var(--panel-shadow)' });
+  zoomResetBtn.addEventListener('click', resetZoom);
+  document.body.appendChild(zoomResetBtn);
+
+  function showToast(msg, duration) {
+    if (duration === undefined) duration = 2500;
+    const t = document.createElement('div');
+    t.textContent = msg;
+    Object.assign(t.style, { position:'fixed', bottom:'60px', right:'16px', zIndex:'999', padding:'8px 14px', fontSize:'12px', borderRadius:'8px', background:'var(--panel-bg)', color:'var(--text)', boxShadow:'0 2px 10px var(--panel-shadow)', border:'1px solid var(--border)', maxWidth:'260px', lineHeight:'1.4', opacity:'0', transition:'opacity .25s ease' });
+    document.body.appendChild(t);
+    requestAnimationFrame(() => { t.style.opacity = '1'; });
+    if (duration > 0) setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, duration);
+    return t;
+  }
+  function dismissToast(el) { if (el) { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); } }
+
+  // Service Worker for offline caching
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+
+  // External links (works on all Tauri platforms, including Android)
   if (window.__TAURI__) {
-    // Drag-drop (provides file/folder paths via native API)
+    document.getElementById('content-body').addEventListener('click', e => {
+      const link = e.target.closest('a');
+      if (link && link.href && /^https?:\/\//i.test(link.href)) {
+        e.preventDefault();
+        window.__TAURI__.opener.openUrl(link.href);
+      }
+    });
+  }
+
+  // Desktop Tauri: drag-drop, native session restore, CLI arg
+  if (isDesktopTauri) {
     async function handleTauriDrop(paths) {
       const mdPaths = paths.filter(p => /\.(md|markdown|mdown)$/i.test(p));
       if (paths.length === 1 && mdPaths.length === 0) {
@@ -1221,53 +1610,71 @@ if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Me
         }).catch(() => {});
       }
     } catch (_e) {}
-    // External links → open in default browser
-    document.getElementById('content-body').addEventListener('click', e => {
-      const link = e.target.closest('a');
-      if (link && link.href && /^https?:\/\//i.test(link.href)) {
-        e.preventDefault();
-        window.__TAURI__.opener.openUrl(link.href);
-      }
-    });
-    // Session restore: CLI arg → saved session
-    async function restoreTauriSession() {
-      const session = loadSession();
-      restoreSidebarSession(session);
-      if (session && session.type === 'tauri') {
-        if (session.path) {
-          try {
-            const d = await window.__TAURI__.core.invoke('read_file', { path: session.path });
-            if (d) { render(d.content, d.name); saveSession({ type: 'tauri', name: d.name, path: d.path }); }
-          } catch { clearSession(); }
-        } else if (session.folderPath) {
-          try {
-            const fd = await window.__TAURI__.core.invoke('scan_folder', { path: session.folderPath });
-            if (fd.files && fd.files.length) {
-              loadFolder(fd.files, session.folderPath);
-              if (session.activeRelPath && fd.files.some(f => (f.rel_path) === session.activeRelPath)) {
-                loadFolderFileByRel(session.activeRelPath);
-              }
-            }
-          } catch { clearSession(); }
-        }
-      }
     }
-    window.__TAURI__.core.invoke('get_initial_file').then(data => {
-      if (data) {
-        render(data.content, data.name);
-        saveSession({ type: 'tauri', name: data.name, path: data.path });
-      } else {
-        restoreTauriSession();
-      }
-    }).catch(() => restoreTauriSession());
-  } else {
+
+    async function restoreScopedSession(session) {
+      const toastEl = showToast('正在恢复上次的会话�?, 0);
+      try {
+        // 验证 folder ID 是否仍有效（scoped-storage 持久�?handle�?
+        const handles = await window.__TAURI__.core.invoke('plugin:scoped-storage|list_folders', {});
+        const list = handles && (handles.folders || handles.handles || (Array.isArray(handles) ? handles : null));
+        if (!list) { dismissToast(toastEl); clearSession(); return; }
+        const arr = Array.isArray(list) ? list : [];
+        const match = arr.find(h => h.id === session.folderId);
+        if (!match) { dismissToast(toastEl); clearSession(); return; }
+        const mdFiles = await scanScopedFolder(match.id);
+        if (mdFiles.length) {
+          for (const f of mdFiles) f.__scopedFolderId = match.id;
+          loadFolder(mdFiles, match.name || session.folderName || '');
+          if (session.activeRelPath && mdFiles.some(f => f.relPath === session.activeRelPath)) {
+            loadFolderFileByRel(session.activeRelPath);
+          }
+        } else { clearSession(); }
+        dismissToast(toastEl);
+      } catch { dismissToast(toastEl); clearSession(); }
+    }
+
     const session = loadSession();
     restoreSidebarSession(session);
-    if (session && session.type === 'url') {
-      fetchUrl(session.url);
+    if (isDesktopTauri) {
+      async function restoreTauriSession() {
+        if (session && session.type === 'tauri') {
+          if (session.path) {
+            try {
+              const d = await window.__TAURI__.core.invoke('read_file', { path: session.path });
+              if (d) { render(d.content, d.name); saveSession({ type: 'tauri', name: d.name, path: d.path }); }
+            } catch { clearSession(); }
+          } else if (session.folderPath) {
+            const toastEl = showToast('正在恢复上次的会话�?, 0);
+            try {
+              const fd = await window.__TAURI__.core.invoke('scan_folder', { path: session.folderPath });
+              if (fd.files && fd.files.length) {
+                loadFolder(fd.files, session.folderPath);
+                if (session.activeRelPath && fd.files.some(f => (f.rel_path) === session.activeRelPath)) {
+                  loadFolderFileByRel(session.activeRelPath);
+                }
+              }
+              dismissToast(toastEl);
+            } catch { dismissToast(toastEl); clearSession(); }
+          }
+        }
+      }
+      window.__TAURI__.core.invoke('get_initial_file').then(data => {
+        if (data) {
+          render(data.content, data.name);
+          saveSession({ type: 'tauri', name: data.name, path: data.path });
+        } else {
+          restoreTauriSession();
+        }
+      }).catch(() => restoreTauriSession());
+    } else {
+      if (session && session.type === 'scoped' && window.__TAURI__) {
+        restoreScopedSession(session);
+      } else if (session && session.type === 'url') {
+        fetchUrl(session.url);
+      }
     }
-  }
-  // URL query parameter: ?url=... (优先级高于会话)
+  // URL query parameter: ?url=... (优先级高于会�?
   const qUrl = new URLSearchParams(location.search).get('url');
   if (qUrl) setTimeout(() => fetchUrl(qUrl), 0);
 }

@@ -1,1 +1,1 @@
-{"default":{"identifier":"default","description":"Default permissions for mdviewer","local":true,"windows":["main"],"permissions":["core:default","opener:default","dialog:default"]}}
+{"default":{"identifier":"default","description":"Default permissions for mdviewer","local":true,"windows":["main"],"permissions":["core:default","opener:default","dialog:default","dialog:allow-open","fs:default","fs:allow-read-dir","fs:allow-read-text-file","scoped-storage:default"]}}
