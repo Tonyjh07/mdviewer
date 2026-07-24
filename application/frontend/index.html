@@ -1475,6 +1475,16 @@ if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Me
   zoomResetBtn.addEventListener('click', resetZoom);
   document.body.appendChild(zoomResetBtn);
 
+  function showToast(msg, duration) {
+    duration = duration || 2500;
+    const t = document.createElement('div');
+    t.textContent = msg;
+    Object.assign(t.style, { position:'fixed', bottom:'60px', right:'16px', zIndex:'999', padding:'8px 14px', fontSize:'12px', borderRadius:'8px', background:'var(--panel-bg)', color:'var(--text)', boxShadow:'0 2px 10px var(--panel-shadow)', border:'1px solid var(--border)', maxWidth:'260px', lineHeight:'1.4', opacity:'0', transition:'opacity .25s ease' });
+    document.body.appendChild(t);
+    requestAnimationFrame(() => { t.style.opacity = '1'; });
+    setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, duration);
+  }
+
   // Service Worker for offline caching
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(() => {});
@@ -1530,6 +1540,7 @@ if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Me
     }
 
     async function restoreScopedSession(session) {
+      showToast('正在恢复上次的会话…');
       try {
         // 验证 folder ID 是否仍有效（scoped-storage 持久化 handle）
         const handles = await window.__TAURI__.core.invoke('plugin:scoped-storage|list_folders', {});
@@ -1560,6 +1571,7 @@ if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Me
               if (d) { render(d.content, d.name); saveSession({ type: 'tauri', name: d.name, path: d.path }); }
             } catch { clearSession(); }
           } else if (session.folderPath) {
+            showToast('正在恢复上次的会话…');
             try {
               const fd = await window.__TAURI__.core.invoke('scan_folder', { path: session.folderPath });
               if (fd.files && fd.files.length) {
