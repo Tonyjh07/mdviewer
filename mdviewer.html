@@ -545,7 +545,10 @@ function applySettings() {
   document.body.style.fontSize = (s.fontSize || 16) + 'px';
   root.style.setProperty('--lh', s.lineHeight || 1.75);
   const ci = document.getElementById('content-inner');
-  if (ci) setContentFontSize(s.contentFontSize || 100);
+  if (ci) {
+    const fs = s.contentFontSize || 100;
+    ci.style.fontSize = fs === 100 ? '' : fs + '%';
+  }
   root.style.setProperty('--sidebar-font-size', (s.sidebarFontSize || 13) + 'px');
 
   // Swap sidebar tabs
