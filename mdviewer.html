@@ -22,19 +22,19 @@ html { font-size: 16px; scroll-behavior: smooth; height: 100%; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans SC', sans-serif; background: var(--bg); color: var(--text); line-height: var(--lh); transition: background .2s, color .2s; min-height: 100%; }
 
 /* ---- theme presets ---- */
-:root { --bg: #fff; --text: #1a1a2e; --text-dim: #666; --border: #e2e2e2; --toolbar-bg: #fafafa; --toolbar-border: #e2e2e2; --code-bg: #f4f4f8; --code-text: #2d2d3a; --link: #3451b2; --link-hover: #1a3a8a; --heading: #111; --h-border: #eee; --blockquote-border: #3451b2; --blockquote-bg: #f8f9ff; --table-border: #ddd; --table-stripe: #f7f7fb; --selection: rgba(52,81,178,.12); --dropzone-border: #bbb; --dropzone-bg: #fafafa; --toc-text: #555; --toc-hover: #3451b2; --toc-active: #3451b2; --toc-bg: #fafafa; --panel-bg: #fff; --panel-shadow: rgba(0,0,0,.12); --overlay-bg: rgba(0,0,0,.3); --btn-bg: #f0f0f0; --btn-hover: #e4e4e4; --btn-primary: #3451b2; --btn-primary-hover: #1a3a8a; --lh: 1.75; --content-width: 720px; --katex-color: inherit; --file-hover: #eef0ff; --file-active: #e0e4ff; }
-[data-theme="dark"] { --bg: #0f0f23; --text: #d4d4e8; --text-dim: #8888aa; --border: #2a2a45; --toolbar-bg: #16162e; --toolbar-border: #2a2a45; --code-bg: #1a1a35; --code-text: #c4c4dd; --link: #7ba0f0; --link-hover: #9bb8ff; --heading: #eee; --h-border: #2a2a45; --blockquote-border: #7ba0f0; --blockquote-bg: #161630; --table-border: #2a2a45; --table-stripe: #161630; --selection: rgba(123,160,240,.2); --dropzone-border: #555; --dropzone-bg: #16162e; --toc-text: #8888aa; --toc-hover: #7ba0f0; --toc-active: #7ba0f0; --toc-bg: #16162e; --panel-bg: #16162e; --panel-shadow: rgba(0,0,0,.4); --overlay-bg: rgba(0,0,0,.55); --btn-bg: #2a2a45; --btn-hover: #35355a; --btn-primary: #7ba0f0; --btn-primary-hover: #9bb8ff; --file-hover: #1f1f42; --file-active: #282855; }
-[data-theme="sepia"] { --bg: #faf0e6; --text: #3b3228; --text-dim: #8a7f72; --border: #d8cdbc; --toolbar-bg: #f2e6d5; --toolbar-border: #d8cdbc; --code-bg: #efe4d0; --code-text: #3b3228; --link: #7a4a2a; --link-hover: #5c3520; --heading: #2a2218; --h-border: #d8cdbc; --blockquote-border: #7a4a2a; --blockquote-bg: #f5ebdc; --table-border: #d8cdbc; --table-stripe: #f2e6d5; --selection: rgba(122,74,42,.15); --dropzone-border: #bbb; --dropzone-bg: #f5ebdc; --toc-text: #8a7f72; --toc-hover: #7a4a2a; --toc-active: #7a4a2a; --toc-bg: #f2e6d5; --panel-bg: #faf0e6; --panel-shadow: rgba(0,0,0,.1); --overlay-bg: rgba(0,0,0,.25); --btn-bg: #e4d7c2; --btn-hover: #d8cdbc; --btn-primary: #7a4a2a; --btn-primary-hover: #5c3520; --file-hover: #efe4d0; --file-active: #e8dcc6; }
-[data-theme="nord"] { --bg: #eceff4; --text: #2e3440; --text-dim: #6c778f; --border: #d8dee9; --toolbar-bg: #e5e9f0; --toolbar-border: #d8dee9; --code-bg: #e5e9f0; --code-text: #2e3440; --link: #5e81ac; --link-hover: #4c7a9d; --heading: #2e3440; --h-border: #d8dee9; --blockquote-border: #5e81ac; --blockquote-bg: #e5e9f0; --table-border: #d8dee9; --table-stripe: #e5e9f0; --selection: rgba(94,129,172,.18); --dropzone-border: #b0b8c8; --dropzone-bg: #e5e9f0; --toc-text: #6c778f; --toc-hover: #5e81ac; --toc-active: #5e81ac; --toc-bg: #e5e9f0; --panel-bg: #eceff4; --panel-shadow: rgba(0,0,0,.08); --overlay-bg: rgba(0,0,0,.2); --btn-bg: #d8dee9; --btn-hover: #c8d0dd; --btn-primary: #5e81ac; --btn-primary-hover: #4c7a9d; --file-hover: #d8dee9; --file-active: #c8d0dd; }
-[data-theme="gruvbox"] { --bg: #fbf1c7; --text: #3c3836; --text-dim: #928374; --border: #d5c4a1; --toolbar-bg: #f2e5bc; --toolbar-border: #d5c4a1; --code-bg: #efe0b0; --code-text: #3c3836; --link: #98971a; --link-hover: #7c7a14; --heading: #1d2021; --h-border: #d5c4a1; --blockquote-border: #98971a; --blockquote-bg: #f2e5bc; --table-border: #d5c4a1; --table-stripe: #f2e5bc; --selection: rgba(152,151,26,.15); --dropzone-border: #b0a088; --dropzone-bg: #f2e5bc; --toc-text: #928374; --toc-hover: #98971a; --toc-active: #98971a; --toc-bg: #f2e5bc; --panel-bg: #fbf1c7; --panel-shadow: rgba(0,0,0,.08); --overlay-bg: rgba(0,0,0,.2); --btn-bg: #d5c4a1; --btn-hover: #c6b38e; --btn-primary: #98971a; --btn-primary-hover: #7c7a14; --file-hover: #efe0b0; --file-active: #e6d6a0; }
-[data-theme="monokai"] { --bg: #272822; --text: #f8f8f2; --text-dim: #888883; --border: #3e3d32; --toolbar-bg: #2a2b24; --toolbar-border: #3e3d32; --code-bg: #1e1f1c; --code-text: #f8f8f2; --link: #a6e22e; --link-hover: #c0f050; --heading: #f8f8f2; --h-border: #3e3d32; --blockquote-border: #a6e22e; --blockquote-bg: #2a2b24; --table-border: #3e3d32; --table-stripe: #2a2b24; --selection: rgba(166,226,46,.2); --dropzone-border: #555; --dropzone-bg: #2a2b24; --toc-text: #888883; --toc-hover: #a6e22e; --toc-active: #a6e22e; --toc-bg: #2a2b24; --panel-bg: #2a2b24; --panel-shadow: rgba(0,0,0,.5); --overlay-bg: rgba(0,0,0,.6); --btn-bg: #3e3d32; --btn-hover: #4e4d40; --btn-primary: #a6e22e; --btn-primary-hover: #c0f050; --file-hover: #33342d; --file-active: #3e3d32; }
-[data-theme="solarized"] { --bg: #fdf6e3; --text: #586e75; --text-dim: #93a1a1; --border: #eee8d5; --toolbar-bg: #f5efdb; --toolbar-border: #eee8d5; --code-bg: #eee8d5; --code-text: #586e75; --link: #268bd2; --link-hover: #1a73b8; --heading: #073642; --h-border: #eee8d5; --blockquote-border: #268bd2; --blockquote-bg: #f5efdb; --table-border: #eee8d5; --table-stripe: #f5efdb; --selection: rgba(38,139,210,.14); --dropzone-border: #c0bfb0; --dropzone-bg: #f5efdb; --toc-text: #93a1a1; --toc-hover: #268bd2; --toc-active: #268bd2; --toc-bg: #f5efdb; --panel-bg: #fdf6e3; --panel-shadow: rgba(0,0,0,.08); --overlay-bg: rgba(0,0,0,.18); --btn-bg: #eee8d5; --btn-hover: #e0d9c0; --btn-primary: #268bd2; --btn-primary-hover: #1a73b8; --file-hover: #eee8d5; --file-active: #e0d9c0; }
-[data-theme="solarized-dark"] { --bg: #002b36; --text: #839496; --text-dim: #657b83; --border: #073642; --toolbar-bg: #00262e; --toolbar-border: #073642; --code-bg: #00313d; --code-text: #839496; --link: #268bd2; --link-hover: #4a9fdf; --heading: #eee8d5; --h-border: #073642; --blockquote-border: #268bd2; --blockquote-bg: #00262e; --table-border: #073642; --table-stripe: #00262e; --selection: rgba(38,139,210,.2); --dropzone-border: #2a5058; --dropzone-bg: #00262e; --toc-text: #657b83; --toc-hover: #268bd2; --toc-active: #268bd2; --toc-bg: #00262e; --panel-bg: #00262e; --panel-shadow: rgba(0,0,0,.5); --overlay-bg: rgba(0,0,0,.55); --btn-bg: #073642; --btn-hover: #0a4b58; --btn-primary: #268bd2; --btn-primary-hover: #4a9fdf; --file-hover: #00313d; --file-active: #073642; }
+:root { --bg: #fff; --text: #1a1a2e; --text-dim: #666; --border: #e2e2e2; --toolbar-bg: #fafafa; --toolbar-border: #e2e2e2; --code-bg: #f4f4f8; --code-text: #2d2d3a; --link: #3451b2; --link-hover: #1a3a8a; --heading: #111; --h-border: #eee; --blockquote-border: #3451b2; --blockquote-bg: #f8f9ff; --table-border: #ddd; --table-stripe: #f7f7fb; --selection: rgba(52,81,178,.12); --toc-text: #555; --toc-hover: #3451b2; --toc-active: #3451b2; --toc-bg: #fafafa; --panel-bg: #fff; --panel-shadow: rgba(0,0,0,.12); --overlay-bg: rgba(0,0,0,.3); --btn-bg: #f0f0f0; --btn-hover: #e4e4e4; --btn-primary: #3451b2; --btn-primary-hover: #1a3a8a; --lh: 1.75; --content-width: 720px; --katex-color: inherit; --file-hover: #eef0ff; --file-active: #e0e4ff; }
+[data-theme="dark"] { --bg: #0f0f23; --text: #d4d4e8; --text-dim: #8888aa; --border: #2a2a45; --toolbar-bg: #16162e; --toolbar-border: #2a2a45; --code-bg: #1a1a35; --code-text: #c4c4dd; --link: #7ba0f0; --link-hover: #9bb8ff; --heading: #eee; --h-border: #2a2a45; --blockquote-border: #7ba0f0; --blockquote-bg: #161630; --table-border: #2a2a45; --table-stripe: #161630; --selection: rgba(123,160,240,.2); --toc-text: #8888aa; --toc-hover: #7ba0f0; --toc-active: #7ba0f0; --toc-bg: #16162e; --panel-bg: #16162e; --panel-shadow: rgba(0,0,0,.4); --overlay-bg: rgba(0,0,0,.55); --btn-bg: #2a2a45; --btn-hover: #35355a; --btn-primary: #7ba0f0; --btn-primary-hover: #9bb8ff; --file-hover: #1f1f42; --file-active: #282855; }
+[data-theme="sepia"] { --bg: #faf0e6; --text: #3b3228; --text-dim: #8a7f72; --border: #d8cdbc; --toolbar-bg: #f2e6d5; --toolbar-border: #d8cdbc; --code-bg: #efe4d0; --code-text: #3b3228; --link: #7a4a2a; --link-hover: #5c3520; --heading: #2a2218; --h-border: #d8cdbc; --blockquote-border: #7a4a2a; --blockquote-bg: #f5ebdc; --table-border: #d8cdbc; --table-stripe: #f2e6d5; --selection: rgba(122,74,42,.15); --toc-text: #8a7f72; --toc-hover: #7a4a2a; --toc-active: #7a4a2a; --toc-bg: #f2e6d5; --panel-bg: #faf0e6; --panel-shadow: rgba(0,0,0,.1); --overlay-bg: rgba(0,0,0,.25); --btn-bg: #e4d7c2; --btn-hover: #d8cdbc; --btn-primary: #7a4a2a; --btn-primary-hover: #5c3520; --file-hover: #efe4d0; --file-active: #e8dcc6; }
+[data-theme="nord"] { --bg: #eceff4; --text: #2e3440; --text-dim: #6c778f; --border: #d8dee9; --toolbar-bg: #e5e9f0; --toolbar-border: #d8dee9; --code-bg: #e5e9f0; --code-text: #2e3440; --link: #5e81ac; --link-hover: #4c7a9d; --heading: #2e3440; --h-border: #d8dee9; --blockquote-border: #5e81ac; --blockquote-bg: #e5e9f0; --table-border: #d8dee9; --table-stripe: #e5e9f0; --selection: rgba(94,129,172,.18); --toc-text: #6c778f; --toc-hover: #5e81ac; --toc-active: #5e81ac; --toc-bg: #e5e9f0; --panel-bg: #eceff4; --panel-shadow: rgba(0,0,0,.08); --overlay-bg: rgba(0,0,0,.2); --btn-bg: #d8dee9; --btn-hover: #c8d0dd; --btn-primary: #5e81ac; --btn-primary-hover: #4c7a9d; --file-hover: #d8dee9; --file-active: #c8d0dd; }
+[data-theme="gruvbox"] { --bg: #fbf1c7; --text: #3c3836; --text-dim: #928374; --border: #d5c4a1; --toolbar-bg: #f2e5bc; --toolbar-border: #d5c4a1; --code-bg: #efe0b0; --code-text: #3c3836; --link: #98971a; --link-hover: #7c7a14; --heading: #1d2021; --h-border: #d5c4a1; --blockquote-border: #98971a; --blockquote-bg: #f2e5bc; --table-border: #d5c4a1; --table-stripe: #f2e5bc; --selection: rgba(152,151,26,.15); --toc-text: #928374; --toc-hover: #98971a; --toc-active: #98971a; --toc-bg: #f2e5bc; --panel-bg: #fbf1c7; --panel-shadow: rgba(0,0,0,.08); --overlay-bg: rgba(0,0,0,.2); --btn-bg: #d5c4a1; --btn-hover: #c6b38e; --btn-primary: #98971a; --btn-primary-hover: #7c7a14; --file-hover: #efe0b0; --file-active: #e6d6a0; }
+[data-theme="monokai"] { --bg: #272822; --text: #f8f8f2; --text-dim: #888883; --border: #3e3d32; --toolbar-bg: #2a2b24; --toolbar-border: #3e3d32; --code-bg: #1e1f1c; --code-text: #f8f8f2; --link: #a6e22e; --link-hover: #c0f050; --heading: #f8f8f2; --h-border: #3e3d32; --blockquote-border: #a6e22e; --blockquote-bg: #2a2b24; --table-border: #3e3d32; --table-stripe: #2a2b24; --selection: rgba(166,226,46,.2); --toc-text: #888883; --toc-hover: #a6e22e; --toc-active: #a6e22e; --toc-bg: #2a2b24; --panel-bg: #2a2b24; --panel-shadow: rgba(0,0,0,.5); --overlay-bg: rgba(0,0,0,.6); --btn-bg: #3e3d32; --btn-hover: #4e4d40; --btn-primary: #a6e22e; --btn-primary-hover: #c0f050; --file-hover: #33342d; --file-active: #3e3d32; }
+[data-theme="solarized"] { --bg: #fdf6e3; --text: #586e75; --text-dim: #93a1a1; --border: #eee8d5; --toolbar-bg: #f5efdb; --toolbar-border: #eee8d5; --code-bg: #eee8d5; --code-text: #586e75; --link: #268bd2; --link-hover: #1a73b8; --heading: #073642; --h-border: #eee8d5; --blockquote-border: #268bd2; --blockquote-bg: #f5efdb; --table-border: #eee8d5; --table-stripe: #f5efdb; --selection: rgba(38,139,210,.14); --toc-text: #93a1a1; --toc-hover: #268bd2; --toc-active: #268bd2; --toc-bg: #f5efdb; --panel-bg: #fdf6e3; --panel-shadow: rgba(0,0,0,.08); --overlay-bg: rgba(0,0,0,.18); --btn-bg: #eee8d5; --btn-hover: #e0d9c0; --btn-primary: #268bd2; --btn-primary-hover: #1a73b8; --file-hover: #eee8d5; --file-active: #e0d9c0; }
+[data-theme="solarized-dark"] { --bg: #002b36; --text: #839496; --text-dim: #657b83; --border: #073642; --toolbar-bg: #00262e; --toolbar-border: #073642; --code-bg: #00313d; --code-text: #839496; --link: #268bd2; --link-hover: #4a9fdf; --heading: #eee8d5; --h-border: #073642; --blockquote-border: #268bd2; --blockquote-bg: #00262e; --table-border: #073642; --table-stripe: #00262e; --selection: rgba(38,139,210,.2); --toc-text: #657b83; --toc-hover: #268bd2; --toc-active: #268bd2; --toc-bg: #00262e; --panel-bg: #00262e; --panel-shadow: rgba(0,0,0,.5); --overlay-bg: rgba(0,0,0,.55); --btn-bg: #073642; --btn-hover: #0a4b58; --btn-primary: #268bd2; --btn-primary-hover: #4a9fdf; --file-hover: #00313d; --file-active: #073642; }
 
 #app { display: flex; flex-direction: column; min-height: 100vh; background: var(--bg); }
 /* toolbar */
-#toolbar { position: sticky; top: 0; z-index: 100; display: flex; align-items: center; gap: 6px; padding: 0 12px; height: 48px; background: var(--toolbar-bg); border-bottom: 1px solid var(--toolbar-border); flex-shrink: 0; user-select: none; transition: top .25s ease; }
-#toolbar.hide { top: -48px; }
+#toolbar { position: sticky; top: 0; z-index: 999; display: flex; align-items: center; gap: 6px; padding: env(safe-area-inset-top) 12px 0; height: calc(48px + env(safe-area-inset-top, 0px)); background: var(--toolbar-bg); border-bottom: 1px solid var(--toolbar-border); flex-shrink: 0; user-select: none; transition: top .25s ease; }
+#toolbar.hide { top: calc(-48px - env(safe-area-inset-top, 0px)); }
 .logo { font-weight: 700; font-size: 15px; color: var(--heading); white-space: nowrap; letter-spacing: -.02em; }
 #fileName { flex: 1; font-size: 13px; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin: 0 6px; text-align: center; min-width: 0; background: transparent; }
 .toolbar-group { display: flex; gap: 3px; }
@@ -49,7 +49,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helv
 /* main area */
 #main { display: flex; flex: 1; min-height: 0; }
 /* sidebar (file list + toc) */
-#sidebar { width: 240px; flex-shrink: 0; display: none; flex-direction: column; border-right: 1px solid var(--border); background: var(--toc-bg); overflow: hidden; position: sticky; top: 48px; align-self: flex-start; min-height: 100vh; transition: top .25s ease; }
+#sidebar { width: 240px; flex-shrink: 0; display: none; flex-direction: column; border-right: 1px solid var(--border); background: var(--toc-bg); overflow: hidden; position: sticky; top: calc(48px + env(safe-area-inset-top, 0px)); align-self: flex-start; min-height: 100vh; transition: top .25s ease; }
 #sidebar.open { display: flex; }
 #sidebar.full { top: 0; }
 /* sidebar tabs */
@@ -77,23 +77,19 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helv
 #tocPanel a.active { color: var(--toc-active); border-left-color: var(--toc-active); font-weight: 500; }
 #tocPanel .toc-h2 { padding-left: 32px; font-size: calc(var(--sidebar-font-size, 13px) - 0.5px); }
 #tocPanel .toc-h3 { padding-left: 48px; font-size: calc(var(--sidebar-font-size, 13px) - 1px); }
-/* shortcut list */
-.shortcut-list { display: flex; flex-direction: column; gap: 4px; }
-.shortcut-row { display: flex; align-items: center; justify-content: space-between; padding: 3px 0; font-size: 13px; }
-.shortcut-row .shortcut-btn { background: var(--btn-bg); border: 1px solid var(--border); border-radius: 4px; padding: 2px 10px; font-size: 12px; font-family: inherit; color: var(--text); cursor: pointer; min-width: 100px; text-align: center; transition: background .12s; outline: none; font-family: monospace; }
-.shortcut-row .shortcut-btn:hover { background: var(--btn-hover); }
-.shortcut-row .shortcut-btn.capturing { background: var(--btn-primary); color: #fff; border-color: var(--btn-primary); }
-.shortcut-reset { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 11px; padding: 0 4px; text-decoration: underline; font-family: inherit; outline: none; }
-.shortcut-reset:hover { color: var(--link); }
 /* content */
 #content { flex: 1; min-width: 0; padding: 40px 24px; display: flex; justify-content: center; }
 #content-inner { max-width: var(--content-width); width: 100%; min-height: 200px; }
-/* dropzone */
-#dropzone { display: flex; flex-direction: column; align-items: center; justify-content: center; border: 2px dashed var(--dropzone-border); border-radius: 12px; padding: 60px 40px; text-align: center; color: var(--text-dim); transition: border-color .2s, background .2s; cursor: default; margin-top: 40px; }
-#dropzone.drag-over { border-color: var(--link); background: var(--blockquote-bg); }
-#dropzone svg { width: 56px; height: 56px; margin-bottom: 16px; opacity: .4; color: var(--text-dim); }
-#dropzone p { font-size: 15px; margin-bottom: 6px; color: var(--text); }
-#dropzone .sub { font-size: 13px; color: var(--text-dim); }
+/* empty state */
+#dropzone { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px 40px; text-align: center; }
+#dropzone .empty-btn { display: inline-flex; align-items: center; gap: 10px; padding: 14px 36px; font-size: 17px; font-weight: 600; border: none; border-radius: 14px; background: var(--btn-primary); color: #fff; cursor: pointer; font-family: inherit; transition: background .15s, transform .1s, box-shadow .15s; box-shadow: 0 4px 20px rgba(0,0,0,.15); }
+#dropzone .empty-btn:hover { background: var(--btn-primary-hover); box-shadow: 0 6px 24px rgba(0,0,0,.2); }
+#dropzone .empty-btn:active { transform: scale(.96); }
+#dropzone .empty-btn svg { width: 22px; height: 22px; }
+#dropzone .empty-icon { width: 64px; height: 64px; margin-bottom: 24px; border-radius: 50%; background: var(--btn-primary); display: flex; align-items: center; justify-content: center; opacity: .9; }
+#dropzone .empty-icon svg { width: 32px; height: 32px; color: #fff; }
+#dropzone .empty-title { font-size: 18px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+#dropzone .empty-sub { font-size: 14px; color: var(--text-dim); margin-top: 16px; line-height: 1.6; max-width: 280px; }
 /* ---- Typography ---- */
 #content-inner h1, #content-inner h2, #content-inner h3, #content-inner h4, #content-inner h5 { color: var(--heading); font-weight: 600; line-height: 1.35; margin-top: 1.8em; margin-bottom: .5em; }
 #content-inner h1 { font-size: 1.85em; padding-bottom: .3em; border-bottom: 1px solid var(--h-border); margin-top: 0; }
@@ -203,8 +199,10 @@ input[type="range"] { width: 100%; margin: 4px 0; accent-color: var(--btn-primar
   #content-inner h1 { font-size: 1.55em; }
   #content-inner h2 { font-size: 1.25em; }
   #content-inner pre code { padding: 14px; font-size: .8em; }
-  #dropzone { padding: 40px 24px; margin-top: 24px; }
-  #dropzone svg { width: 44px; height: 44px; }
+  #dropzone { padding: 60px 24px; }
+  #dropzone .empty-btn { padding: 12px 28px; font-size: 15px; }
+  #dropzone .empty-icon { width: 52px; height: 52px; margin-bottom: 20px; }
+  #dropzone .empty-icon svg { width: 26px; height: 26px; }
   .settings-panel { max-width: none; width: 100vw; border-radius: 16px 16px 0 0; }
   #settingsOverlay { align-items: flex-end; }
   #settingsOverlay.open { display: flex; }
@@ -279,9 +277,9 @@ input[type="range"] { width: 100%; margin: 4px 0; accent-color: var(--btn-primar
       <div id="content-inner">
         <div id="content-body"></div>
         <div id="dropzone">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-          <p>拖入 Markdown 文件，或点击上方按钮</p>
-          <div class="sub">支持 .md 文件 / 文件夹 / URL 导入 / LaTeX 公式渲染</div>
+          <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg></div>
+          <button class="empty-btn" id="emptyOpenBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>打开文件</button>
+          <div class="empty-sub">支持 .md / .markdown / .mdown 文件<br>也可拖拽文件或文件夹到此处</div>
         </div>
       </div>
     </main>
@@ -370,10 +368,6 @@ input[type="range"] { width: 100%; margin: 4px 0; accent-color: var(--btn-primar
       <div class="setting-group">
         <label>侧栏字号 <span class="value" id="sidebarFontSizeValue">13px</span></label>
         <input type="range" id="sidebarFontSizeRange" min="10" max="24" value="13" step="1">
-      </div>
-      <div class="setting-group" style="border-top:1px solid var(--border);padding-top:14px;">
-        <label>快捷键（点击修改）</label>
-        <div class="shortcut-list" id="shortcutList"></div>
       </div>
       <div class="setting-group" style="border-top:1px solid var(--border);padding-top:14px;">
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:13px;">
@@ -467,46 +461,6 @@ function restoreSidebarSession(session) {
   }
 }
 
-// ---- keyboard shortcuts ----
-const SHORTCUT_ACTIONS = [
-  { id: 'openFile', label: '打开文件', default: 'Ctrl+O' },
-  { id: 'openFolder', label: '打开文件夹', default: 'Ctrl+Shift+O' },
-  { id: 'toggleSidebar', label: '切换侧栏', default: 'Ctrl+B' },
-  { id: 'openUrl', label: '打开 URL', default: 'Ctrl+U' },
-  { id: 'openSettings', label: '打开选项', default: 'Ctrl+,' },
-  { id: 'increaseFontSize', label: '增大字号', default: 'Ctrl+=' },
-  { id: 'decreaseFontSize', label: '减小字号', default: 'Ctrl+-' },
-  { id: 'closePanels', label: '关闭面板', default: 'Esc' },
-];
-const DEFAULT_SHORTCUTS = {
-  openFile: { key: 'o', ctrl: true, shift: false, meta: false, alt: false },
-  openFolder: { key: 'o', ctrl: true, shift: true, meta: false, alt: false },
-  toggleSidebar: { key: 'b', ctrl: true, shift: false, meta: false, alt: false },
-  openUrl: { key: 'u', ctrl: true, shift: false, meta: false, alt: false },
-  openSettings: { key: ',', ctrl: true, shift: false, meta: false, alt: false },
-  increaseFontSize: { key: '=', ctrl: true, shift: false, meta: false, alt: false },
-  decreaseFontSize: { key: '-', ctrl: true, shift: false, meta: false, alt: false },
-  closePanels: { key: 'Escape', ctrl: false, shift: false, meta: false, alt: false },
-};
-function getShortcuts() {
-  return { ...DEFAULT_SHORTCUTS, ...(state.settings.shortcuts || {}) };
-}
-function shortcutDisplay(s) {
-  const parts = [];
-  if (s.ctrl) parts.push('Ctrl');
-  if (s.meta) parts.push('Cmd');
-  if (s.alt) parts.push('Alt');
-  if (s.shift) parts.push('Shift');
-  const k = s.key === ',' ? ',' : s.key === '-' ? '-' : s.key === '=' ? '=' : s.key === 'Escape' ? 'Esc' : s.key.toUpperCase();
-  parts.push(k);
-  return parts.join('+');
-}
-function shortcutMatch(e, s) {
-  return e.key.toLowerCase() === s.key.toLowerCase() &&
-    e.ctrlKey === !!s.ctrl && e.metaKey === !!s.meta &&
-    e.shiftKey === !!s.shift && e.altKey === !!s.alt;
-}
-
 // ---- theme application ----
 function applySettings() {
   const s = state.settings;
@@ -561,35 +515,6 @@ function applyCodeTheme(mode) {
     : 'https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/stackoverflow-light.min.css';
 }
 
-function resetShortcut(id) {
-  if (state.settings.shortcuts) delete state.settings.shortcuts[id];
-  saveSettings();
-  renderShortcutList();
-}
-function renderShortcutList() {
-  const container = document.getElementById('shortcutList');
-  if (!container) return;
-  const shortcuts = getShortcuts();
-  container.innerHTML = SHORTCUT_ACTIONS.map(a => {
-    const s = shortcuts[a.id];
-    const display = s ? shortcutDisplay(s) : a.default;
-    const isCustom = state.settings.shortcuts && a.id in state.settings.shortcuts;
-    const resetBtn = isCustom ? `<button class="shortcut-reset" data-action="${a.id}">重置</button>` : '';
-    return `<div class="shortcut-row"><span>${a.label}</span><div style="display:flex;gap:4px;align-items:center">${resetBtn}<button class="shortcut-btn" data-action="${a.id}">${display}</button></div></div>`;
-  }).join('');
-  container.querySelectorAll('.shortcut-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      capturingShortcut = btn.dataset.action;
-      renderShortcutList();
-      const el = container.querySelector(`[data-action="${capturingShortcut}"]`);
-      if (el) { el.textContent = '按下按键...'; el.classList.add('capturing'); }
-    });
-  });
-  container.querySelectorAll('.shortcut-reset').forEach(btn => {
-    btn.addEventListener('click', () => resetShortcut(btn.dataset.action));
-  });
-}
-
 function syncSettingUI() {
   const s = state.settings;
   const theme = s.theme || 'light';
@@ -607,7 +532,6 @@ function syncSettingUI() {
   document.getElementById('sidebarFontSizeValue').textContent = (s.sidebarFontSize || 13) + 'px';
   document.getElementById('alwaysToolbarCb').checked = !!s.alwaysShowToolbar;
   document.getElementById('swapTabsCb').checked = !!s.swapSidebarTabs;
-  renderShortcutList();
 }
 
 function syncCustomColorInputs() {
@@ -1024,8 +948,6 @@ function adjustFontSize(delta) {
   if (next !== current) { s.fontSize = next; saveSettings(); applySettings(); }
 }
 
-let capturingShortcut = null;
-
 // ---- sidebar toggle ----
 let sidebarVisible = false;
 function toggleSidebar() {
@@ -1038,7 +960,7 @@ function toggleSidebar() {
 
 // ---- settings panel ----
 function openSettings() { document.getElementById('settingsOverlay').classList.add('open'); }
-function closeSettings() { document.getElementById('settingsOverlay').classList.remove('open'); capturingShortcut = null; }
+function closeSettings() { document.getElementById('settingsOverlay').classList.remove('open'); }
 function openUrl() {
   document.getElementById('urlOverlay').classList.add('open');
   document.getElementById('urlInput').value = '';
@@ -1049,18 +971,27 @@ function closeUrl() { document.getElementById('urlOverlay').classList.remove('op
 // ---- event binding ----
 function init() {
   // File open
+  document.getElementById('emptyOpenBtn').addEventListener('click', e => {
+    e.stopPropagation();
+    document.getElementById('openBtn').click();
+  });
+  document.getElementById('dropzone').addEventListener('click', () => {
+    document.getElementById('openBtn').click();
+  });
   document.getElementById('openBtn').addEventListener('click', async () => {
-    if (window.__TAURI__) {
-      const path = await window.__TAURI__.dialog.open({
-        filters: [{ name: 'Markdown', extensions: ['md', 'markdown', 'mdown'] }]
-      });
-      if (path) {
-        const data = await window.__TAURI__.core.invoke('read_file', { path });
-        if (data) { render(data.content, data.name); saveSession({ type: 'tauri', name: data.name, path }); }
-      }
-    } else {
-      document.getElementById('fileInput').click();
+    if (window.__TAURI__?.dialog) {
+      try {
+        const path = await window.__TAURI__.dialog.open({
+          filters: [{ name: 'Markdown', extensions: ['md', 'markdown', 'mdown'] }]
+        });
+        if (path) {
+          const data = await window.__TAURI__.core.invoke('read_file', { path });
+          if (data) { render(data.content, data.name); saveSession({ type: 'tauri', name: data.name, path }); }
+        }
+        return;
+      } catch (_) {}
     }
+    document.getElementById('fileInput').click();
   });
   document.getElementById('fileInput').addEventListener('change', e => {
     if (e.target.files[0]) loadFile(e.target.files[0]);
@@ -1069,38 +1000,28 @@ function init() {
 
   // Folder open
   document.getElementById('folderBtn').addEventListener('click', async () => {
-    if (window.__TAURI__) {
-      const folderPath = await window.__TAURI__.dialog.open({ directory: true });
-      if (folderPath) {
-        const fd = await window.__TAURI__.core.invoke('scan_folder', { path: folderPath });
-        loadFolder(fd.files, folderPath);
-      }
-    } else {
-      document.getElementById('folderInput').click();
+    if (window.__TAURI__?.dialog) {
+      try {
+        const folderPath = await window.__TAURI__.dialog.open({ directory: true });
+        if (folderPath) {
+          const fd = await window.__TAURI__.core.invoke('scan_folder', { path: folderPath });
+          loadFolder(fd.files, folderPath);
+        }
+        return;
+      } catch (_) {}
     }
+    document.getElementById('folderInput').click();
   });
   document.getElementById('folderInput').addEventListener('change', e => {
     if (e.target.files.length) loadFolder(e.target.files);
     e.target.value = '';
   });
 
-  // Drag and drop (binding only to outer element, one listener only)
-  const dropzoneEl = document.getElementById('dropzone');
+  // Drag and drop
   const content = document.getElementById('content');
-  let dragCounter = 0;
-  content.addEventListener('dragenter', e => {
-    e.preventDefault();
-    if (++dragCounter === 1) dropzoneEl.classList.add('drag-over');
-  });
-  content.addEventListener('dragleave', e => {
-    e.preventDefault();
-    if (--dragCounter === 0) dropzoneEl.classList.remove('drag-over');
-  });
   content.addEventListener('dragover', e => e.preventDefault());
   content.addEventListener('drop', e => {
     e.preventDefault();
-    dragCounter = 0;
-    dropzoneEl.classList.remove('drag-over');
     const dt = e.dataTransfer;
     const droppedFiles = Array.from(dt.files);
     const entry = dt.items && dt.items[0] && dt.items[0].webkitGetAsEntry && dt.items[0].webkitGetAsEntry();
@@ -1146,8 +1067,10 @@ function init() {
   backdrop.addEventListener('click', () => { if (sidebarVisible) toggleSidebar(); });
 
   // Menu button: toggle mobile action sheet
-  document.getElementById('menuBtn').addEventListener('click', () => {
-    mobileSheet.classList.toggle('open');
+  // Menu button (delegated to toolbar for robustness)
+  document.getElementById('toolbar').addEventListener('click', e => {
+    const btn = e.target.closest('#menuBtn');
+    if (btn) mobileSheet.classList.toggle('open');
   });
 
   // Mobile sheet buttons
@@ -1271,47 +1194,6 @@ function init() {
     lastScrollY = sy;
   }, { passive: true });
 
-  // Keyboard shortcuts (configurable via settings)
-  document.addEventListener('keydown', e => {
-    // If capturing a shortcut in settings, handle that first
-    if (capturingShortcut) {
-      e.preventDefault();
-      if (e.key === 'Escape') { capturingShortcut = null; renderShortcutList(); return; }
-if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Meta') return;
-          const cap = capturingShortcut;
-          const newS = { key: e.key, ctrl: e.ctrlKey, shift: e.shiftKey, meta: e.metaKey, alt: e.altKey };
-          const defS = DEFAULT_SHORTCUTS[cap];
-          const isDefault = defS && Object.keys(defS).every(k => defS[k] === newS[k]);
-          capturingShortcut = null;
-          if (isDefault) {
-            if (state.settings.shortcuts) delete state.settings.shortcuts[cap];
-          } else {
-            if (!state.settings.shortcuts) state.settings.shortcuts = {};
-            state.settings.shortcuts[cap] = newS;
-          }
-          saveSettings();
-          renderShortcutList();
-          return;
-    }
-    const shortcuts = getShortcuts();
-    for (const [action, s] of Object.entries(shortcuts)) {
-      if (shortcutMatch(e, s)) {
-        e.preventDefault();
-        switch (action) {
-          case 'openFile': window.__TAURI__ ? document.getElementById('openBtn').click() : document.getElementById('fileInput').click(); break;
-          case 'openFolder': window.__TAURI__ ? document.getElementById('folderBtn').click() : document.getElementById('folderInput').click(); break;
-          case 'toggleSidebar': toggleSidebar(); break;
-          case 'openUrl': openUrl(); break;
-          case 'openSettings': openSettings(); break;
-          case 'increaseFontSize': adjustFontSize(1); break;
-          case 'decreaseFontSize': adjustFontSize(-1); break;
-          case 'closePanels': closeSettings(); closeUrl(); break;
-        }
-        return;
-      }
-    }
-  });
-
   applySettings();
   if (typeof mermaid !== 'undefined') {
     mermaid.initialize({ startOnLoad: false });
@@ -1343,11 +1225,7 @@ if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Me
       if (getCurrentWebview) {
         getCurrentWebview().onDragDropEvent((event) => {
           const p = event.payload;
-          const dz = document.getElementById('dropzone');
-          if (p.type === 'over') { dz.classList.add('drag-over'); return; }
-          if (p.type === 'leave') { dz.classList.remove('drag-over'); return; }
           if (p.type !== 'drop') return;
-          dz.classList.remove('drag-over');
           const paths = p.paths;
           if (!paths || !paths.length) return;
           handleTauriDrop(paths);
@@ -1414,3 +1292,4 @@ document.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
 </html>
+
