@@ -1436,34 +1436,30 @@ if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Me
     }, { passive: true });
   }
 
+  // Font-size based zoom for content only
+  const contentInner = document.getElementById('content-inner');
+
   applySettings();
   if (typeof mermaid !== 'undefined') {
     mermaid.initialize({ startOnLoad: false });
   }
 
-  // Font-size based zoom for content only
-  const contentInner = document.getElementById('content-inner');
-
   function setContentFontSize(pct) {
     const ci = contentInner;
     if (!ci) return;
     const scrollEl = document.scrollingElement || document.documentElement;
-    // 记忆视口顶部第一个 #content-inner 后代元素的 offsetTop
-    let anchor = null, anchorOff = 0;
-    const top = scrollEl.scrollTop;
-    const children = ci.querySelectorAll('h1,h2,h3,h4,h5,h6,p,pre,ul,ol,table,blockquote,figure,hr,div.mermaid,div.katex-display');
-    for (const el of children) {
-      const rt = el.getBoundingClientRect();
-      if (rt.top >= 0 && el.offsetTop >= top) {
-        anchor = el;
-        anchorOff = top - el.offsetTop;
-        break;
-      }
+    // 记忆视口顶部锚元素及其旧位置
+    let anchor = null, oldTop = 0;
+    const topEl = document.elementFromPoint(scrollEl.clientWidth / 2, 0);
+    if (topEl && ci.contains(topEl)) {
+      anchor = topEl;
+      oldTop = anchor.getBoundingClientRect().top;
     }
     ci.style.fontSize = pct === 100 ? '' : pct + '%';
     requestAnimationFrame(() => {
       if (anchor) {
-        scrollEl.scrollTop = anchor.offsetTop + anchorOff;
+        const newTop = anchor.getBoundingClientRect().top;
+        scrollEl.scrollTop += newTop - oldTop;
       }
     });
   }
