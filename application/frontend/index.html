@@ -400,10 +400,14 @@ input[type="range"] { width: 100%; margin: 4px 0; accent-color: var(--btn-primar
           保存会话
         </label>
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:13px;margin-top:8px;">
-          <input type="checkbox" id="autoDarkCb" style="accent-color:var(--btn-primary);width:16px;height:16px;cursor:pointer;">
-          自动暗色模式
-        </label>
-      </div>
+           <input type="checkbox" id="autoDarkCb" style="accent-color:var(--btn-primary);width:16px;height:16px;cursor:pointer;">
+           自动暗色模式
+         </label>
+         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:13px;margin-top:8px;">
+           <input type="checkbox" id="autoDetectLatexCb" style="accent-color:var(--btn-primary);width:16px;height:16px;cursor:pointer;">
+           自动识别 LaTeX（无定界符兼容）
+         </label>
+       </div>
     </div>
   </div>
 </div>
@@ -642,6 +646,7 @@ function syncSettingUI() {
   document.getElementById('swipeSidebarCb').checked = s.swipeSidebar !== false;
   document.getElementById('saveSessionCb').checked = s.saveSession !== false;
   document.getElementById('autoDarkCb').checked = !!s.autoDarkMode;
+  document.getElementById('autoDetectLatexCb').checked = !!s.autoDetectLatex;
   renderShortcutList();
 }
 
@@ -679,6 +684,18 @@ function protectMath(md) {
   const processed = parts.map((part, i) => {
     if (i % 2 === 1) return part; // code block — leave as-is
     let t = part;
+    // Auto-detect bare LaTeX (no delimiters) when setting is on
+    if (state.settings.autoDetectLatex) {
+      // Split by CJK characters; non-CJK segments containing \command become math
+      t = t.replace(/[\u4e00-\u9fff]+|[^\u4e00-\u9fff]+/g, (seg) => {
+        if (!/\\[a-zA-Z]/.test(seg)) return seg;
+        seg = seg.trim();
+        if (!seg) return seg;
+        // If the segment already starts/ends with $ or $$, leave it alone
+        if (/^\$/.test(seg) || /\$$/.test(seg)) return seg;
+        return '$' + seg + '$';
+      });
+    }
     // block math $$...$$ and \[...\]
     t = t.replace(/\$\$([\s\S]+?)\$\$/g, (_, e) => { const id = `\x00M_${blocks.length}\x00`; blocks.push({ d:1, e:e.trim() }); return id; });
     t = t.replace(/\\\[([\s\S]+?)\\\]/g, (_, e) => { const id = `\x00M_${blocks.length}\x00`; blocks.push({ d:1, e:e.trim() }); return id; });
@@ -1350,6 +1367,11 @@ function init() {
   // Auto dark mode checkbox
   document.getElementById('autoDarkCb').addEventListener('change', e => {
     state.settings.autoDarkMode = e.target.checked; saveSettings(); applySettings();
+  });
+
+  // Auto-detect LaTeX checkbox
+  document.getElementById('autoDetectLatexCb').addEventListener('change', e => {
+    state.settings.autoDetectLatex = e.target.checked; saveSettings();
   });
 
   // Scroll: hide toolbar on down, show on up (desktop only)

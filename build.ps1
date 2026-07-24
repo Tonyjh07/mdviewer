@@ -17,7 +17,7 @@ $frontend = [System.IO.Path]::Combine($root, "application", "frontend", "index.h
 
 # ---- version ----
 Write-Host "==> Reading version ..." -ForegroundColor Cyan
-$content = Get-Content $cargo -Raw
+$content = [System.IO.File]::ReadAllText($cargo)
 $verMatch = [regex]::Match($content, 'version = "(\d+)\.(\d+)\.(\d+)"')
 if (-not $verMatch.Success) { throw "Failed to parse version in Cargo.toml" }
 
@@ -45,27 +45,29 @@ Write-Host "    Android versionCode: $versionCode" -ForegroundColor Green
 
 Write-Host "==> Updating Cargo.toml ..." -ForegroundColor Cyan
 $content = $content -replace 'version = "\d+\.\d+\.\d+"', "version = `"$newVer`""
-Set-Content -Path $cargo -Value $content -NoNewline -Encoding UTF8
+[System.IO.File]::WriteAllText($cargo, $content, [System.Text.UTF8Encoding]::new($false))
 
 Write-Host "==> Updating tauri.conf.json ..." -ForegroundColor Cyan
-$confContent = Get-Content $conf -Raw
+$confContent = [System.IO.File]::ReadAllText($conf)
 $confContent = $confContent -replace '"version": "\d+\.\d+\.\d+"', "`"version`": `"$newVer`""
-Set-Content -Path $conf -Value $confContent -NoNewline -Encoding UTF8
+[System.IO.File]::WriteAllText($conf, $confContent, [System.Text.UTF8Encoding]::new($false))
 
 Write-Host "==> Updating tauri.properties ..." -ForegroundColor Cyan
 if (Test-Path $props) {
-  $p = Get-Content $props -Raw
+  $p = [System.IO.File]::ReadAllText($props)
   $p = $p -replace 'tauri\.android\.versionName=[\d\.]+', "tauri.android.versionName=$newVer"
   $p = $p -replace 'tauri\.android\.versionCode=\d+', "tauri.android.versionCode=$versionCode"
-  Set-Content -Path $props -Value $p -NoNewline -Encoding UTF8
+  $encNoBom = [System.Text.UTF8Encoding]::new($false)
+  [System.IO.File]::WriteAllText($props, $p, $encNoBom)
 } else {
   Write-Host "    (gen/android/app/tauri.properties not found — skipping)" -ForegroundColor Yellow
 }
 
 Write-Host "==> Updating mdviewer.html display version ..." -ForegroundColor Cyan
-$mdContent = Get-Content $md -Raw
+$mdContent = [System.IO.File]::ReadAllText($md)
 $mdContent = $mdContent -replace '(class="version">)v[\d\.]+', "`$1v$newVer"
-Set-Content -Path $md -Value $mdContent -NoNewline -Encoding UTF8
+$encNoBom = [System.Text.UTF8Encoding]::new($false)
+[System.IO.File]::WriteAllText($md, $mdContent, $encNoBom)
 
 Write-Host "==> Syncing frontend ..." -ForegroundColor Cyan
 Copy-Item -LiteralPath $md -Destination $frontend -Force
