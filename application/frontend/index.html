@@ -1132,7 +1132,8 @@ function init() {
     const res = await window.__TAURI__.core.invoke('plugin:scoped-storage|read_dir', {
       req: { folderId, path: basePath || undefined }
     });
-    const entries = res.entries || res || [];
+    const raw = res && (Array.isArray(res) ? res : res.entries);
+    const entries = Array.isArray(raw) ? raw : [];
     const files = [];
     for (const entry of entries) {
       if (entry.isFile && /\.(md|markdown|mdown)$/i.test(entry.name)) {
