@@ -1,7 +1,7 @@
 {
   "productName": "mdviewer",
   "version": "0.2.4",
-  "identifier": "com.mdviewer.desktop",
+  "identifier": "com.mdviewer.app",
   "build": {
     "frontendDist": "../frontend"
   },
