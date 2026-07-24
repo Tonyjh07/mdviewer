@@ -45,19 +45,19 @@ Write-Host "    Android versionCode: $versionCode" -ForegroundColor Green
 
 Write-Host "==> Updating Cargo.toml ..." -ForegroundColor Cyan
 $content = $content -replace 'version = "\d+\.\d+\.\d+"', "version = `"$newVer`""
-Set-Content $cargo -Value $content -NoNewline
+Set-Content -Path $cargo -Value $content -NoNewline -Encoding UTF8
 
 Write-Host "==> Updating tauri.conf.json ..." -ForegroundColor Cyan
 $confContent = Get-Content $conf -Raw
 $confContent = $confContent -replace '"version": "\d+\.\d+\.\d+"', "`"version`": `"$newVer`""
-Set-Content $conf -Value $confContent -NoNewline
+Set-Content -Path $conf -Value $confContent -NoNewline -Encoding UTF8
 
 Write-Host "==> Updating tauri.properties ..." -ForegroundColor Cyan
 if (Test-Path $props) {
   $p = Get-Content $props -Raw
   $p = $p -replace 'tauri\.android\.versionName=[\d\.]+', "tauri.android.versionName=$newVer"
   $p = $p -replace 'tauri\.android\.versionCode=\d+', "tauri.android.versionCode=$versionCode"
-  Set-Content $props -Value $p -NoNewline
+  Set-Content -Path $props -Value $p -NoNewline -Encoding UTF8
 } else {
   Write-Host "    (gen/android/app/tauri.properties not found — skipping)" -ForegroundColor Yellow
 }
@@ -65,7 +65,7 @@ if (Test-Path $props) {
 Write-Host "==> Updating mdviewer.html display version ..." -ForegroundColor Cyan
 $mdContent = Get-Content $md -Raw
 $mdContent = $mdContent -replace '(class="version">)v[\d\.]+', "`$1v$newVer"
-Set-Content $md -Value $mdContent -NoNewline
+Set-Content -Path $md -Value $mdContent -NoNewline -Encoding UTF8
 
 Write-Host "==> Syncing frontend ..." -ForegroundColor Cyan
 Copy-Item -LiteralPath $md -Destination $frontend -Force
