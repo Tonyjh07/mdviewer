@@ -1448,9 +1448,11 @@ if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Me
     const ci = contentInner;
     if (!ci) return;
     const scrollEl = document.scrollingElement || document.documentElement;
-    // 记忆视口顶部锚元素及其旧位置
+    // 记忆视口顶部锚元素及其旧位置（跳过 sticky toolbar）
     let anchor = null, oldTop = 0;
-    const topEl = document.elementFromPoint(scrollEl.clientWidth / 2, 0);
+    const tb = document.getElementById('toolbar');
+    const y = tb ? tb.offsetHeight + 1 : 1;
+    const topEl = document.elementFromPoint(scrollEl.clientWidth / 2, y);
     if (topEl && ci.contains(topEl)) {
       anchor = topEl;
       oldTop = anchor.getBoundingClientRect().top;
