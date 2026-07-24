@@ -734,12 +734,14 @@ function render(markdown, name) {
   const contentBody = document.getElementById('content-body');
   const dropzone = document.getElementById('dropzone');
   const loading = document.getElementById('loading');
+  const androidWelcome = document.querySelector('.android-welcome');
 
   if (renderTimeout) { clearTimeout(renderTimeout); renderTimeout = null; }
 
   if (!markdown) {
     contentBody.innerHTML = '';
     dropzone.style.display = '';
+    if (androidWelcome) androidWelcome.style.display = '';
     document.getElementById('fileName').textContent = '';
     rebuildToc([]);
     return;
@@ -750,6 +752,7 @@ function render(markdown, name) {
     renderTimeout = null;
     try {
       dropzone.style.display = 'none';
+      if (androidWelcome) androidWelcome.style.display = 'none';
       const { text, blocks } = protectMath(markdown);
       let html = marked.parse(text);
       html = html.replace(/\x00M_(\d+)\x00/g, (_, idx) => {
