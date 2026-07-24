@@ -837,6 +837,7 @@ function loadFolder(files, folderPath) {
       const entry = { name, relPath };
       if (f.fullPath) entry.fullPath = f.fullPath;
       else if (f.full_path) entry.fullPath = f.full_path;
+      else if (f.__scopedFolderId) { entry.__scopedFolderId = f.__scopedFolderId; }
       else if (file && !f.file) entry.file = file;
       else if (f.file) entry.file = f.file;
       mdFiles.push(entry);
