@@ -936,11 +936,15 @@ function loadFolderFileByRel(relPath) {
     el.classList.toggle('active', el.dataset.rel === relPath);
   });
 
-  if ((item.fullPath || item.full_path) && isDesktopTauri) {
+  if ((item.fullPath || item.full_path) && (isDesktopTauri || window.__TAURI__)) {
     const seq = ++loadSeq;
-    window.__TAURI__.core.invoke('read_file', { path: item.fullPath || item.full_path }).then(data => {
+    const path = item.fullPath || item.full_path;
+    (path.startsWith('content://') ? window.__TAURI__.fs.readTextFile(path) : window.__TAURI__.core.invoke('read_file', { path })).then(data => {
       if (seq !== loadSeq) return;
-      if (data) render(data.content, item.relPath);
+      if (data) {
+        if (typeof data === 'string') render(data, item.relPath);
+        else render(data.content, item.relPath);
+      }
     }).catch(() => {});
   } else if (item.file) {
     const seq = ++loadSeq;
@@ -1043,35 +1047,43 @@ function init() {
       document.body.appendChild(t);
       setTimeout(() => t.remove(), 3000);
     }
-    // 1) File System Access API
-    if (window.showDirectoryPicker) {
+    // 1) Tauri dialog + fs.readDir (works on desktop + Android SAF)
+    if (window.__TAURI__) {
+      try {
+        const dirPath = await window.__TAURI__.dialog.open({ directory: true });
+        if (dirPath) {
+          const entries = await window.__TAURI__.fs.readDir(dirPath);
+          const mdFiles = entries.filter(e => !e.children && /\.(md|markdown|mdown)$/i.test(e.name));
+          if (mdFiles.length) {
+            const mapped = mdFiles.map(e => ({ name: e.name, relPath: e.name, fullPath: e.path }));
+            const folderName = dirPath.replace(/[/\\]+$/, '').split(/[/\\]/).pop() || dirPath;
+            loadFolder(mapped, folderName);
+            return;
+          }
+          toast('文件夹中没有 .md 文件');
+          return;
+        }
+        return;
+      } catch (e) { console.error('Tauri folder:', e); }
+    }
+    // 2) showDirectoryPicker
+        if (window.showDirectoryPicker) {
       try {
         const dir = await window.showDirectoryPicker();
         const entries = [];
         for await (const entry of dir.values()) {
           if (entry.kind === 'file' && /\.md$/i.test(entry.name)) {
             const file = await entry.getFile();
-            entries.push({ file, name: entry.name, rel_path: entry.name, full_path: entry.name });
+            entries.push({ file, name: entry.name, rel_path: entry.name });
           }
         }
         if (entries.length) { loadFolder(entries, dir.name); return; }
-      } catch (e) { console.error('showDirectoryPicker:', e); }
+      } catch (e) { if (e.name !== 'AbortError') console.error('showDirectoryPicker:', e); }
     }
-    // 2) Tauri dialog
-    if (window.__TAURI__) {
-      try {
-        const p = await window.__TAURI__.dialog.open({ directory: true });
-        if (p) {
-          const fd = await window.__TAURI__.core.invoke('scan_folder', { path: p });
-          if (fd.files && fd.files.length) { loadFolder(fd.files, fd.folder_path); return; }
-        }
-        return;
-      } catch (e) { console.error('Tauri dialog:', e); }
-    }
-    // 3) webkitdirectory
+    // 3) webkitdirectory fallback
     const fi = document.getElementById('folderInput');
     fi.click();
-    setTimeout(() => { if (!fi.files.length) toast('文件夹选择不可用，请使用 URL 导入'); }, 1500);
+    setTimeout(() => { if (!fi.files.length) toast('文件夹选择不可用，请使用 URL 导入'); }, 1200);
   }
   document.getElementById('folderBtn').addEventListener('click', pickFolder);
   document.getElementById('folderInput').addEventListener('change', e => {
