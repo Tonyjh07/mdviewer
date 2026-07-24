@@ -1,4 +1,4 @@
 @echo off
 chcp 65001 >nul
-powershell -ExecutionPolicy Bypass -NoProfile -File "%~dp0build.ps1"
-pause
+powershell -ExecutionPolicy Bypass -NoProfile -File "%~dp0build.ps1" %*
+if errorlevel 1 pause
