@@ -1035,8 +1035,8 @@ function init() {
   });
 
   // Folder open
-  document.getElementById('folderBtn').addEventListener('click', async () => {
-    if (isDesktopTauri) {
+  async function pickFolder() {
+    if (window.__TAURI__) {
       const folderPath = await window.__TAURI__.dialog.open({ directory: true });
       if (folderPath) {
         const fd = await window.__TAURI__.core.invoke('scan_folder', { path: folderPath });
@@ -1045,7 +1045,8 @@ function init() {
     } else {
       document.getElementById('folderInput').click();
     }
-  });
+  }
+  document.getElementById('folderBtn').addEventListener('click', pickFolder);
   document.getElementById('folderInput').addEventListener('change', e => {
     if (e.target.files.length) loadFolder(e.target.files);
     e.target.value = '';
@@ -1248,8 +1249,8 @@ if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Me
       btn.addEventListener('click', () => {
         mobileSheet.classList.remove('open');
         const action = btn.dataset.action;
-        if (action === 'openFile') document.getElementById('fileInput').click();
-        else if (action === 'openFolder') document.getElementById('folderInput').click();
+        if (action === 'openFile') { if (window.__TAURI__) { window.__TAURI__.dialog.open({ filters: [{ name: 'Markdown', extensions: ['md','markdown','mdown'] }] }).then(p => { if (p) window.__TAURI__.core.invoke('read_file', { path: p }).then(d => { if (d) { render(d.content, d.name); saveSession({ type:'tauri', name: d.name, path: d.path }); } }); }); } else { document.getElementById('fileInput').click(); } }
+        else if (action === 'openFolder') pickFolder();
         else if (action === 'url') openUrl();
         else if (action === 'sidebar') toggleSidebar();
         else if (action === 'settings') openSettings();
@@ -1265,7 +1266,7 @@ if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Me
       if (e.key === 'Escape' && mobileSheet.classList.contains('open')) mobileSheet.classList.remove('open');
     });
 
-    // 右侧向内滑动打开侧栏
+    // 右侧向内滑动切换侧栏
     let swipeStartX = 0, swipeStartY = 0;
     document.addEventListener('touchstart', e => {
       if (e.touches.length === 1) { swipeStartX = e.touches[0].clientX; swipeStartY = e.touches[0].clientY; }
@@ -1274,7 +1275,7 @@ if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Me
       if (e.changedTouches.length !== 1) return;
       const dx = e.changedTouches[0].clientX - swipeStartX;
       const dy = e.changedTouches[0].clientY - swipeStartY;
-      if (dx < -50 && Math.abs(dy) < 100 && swipeStartX > window.innerWidth - 40 && !sidebarVisible) toggleSidebar();
+      if (dx < -30 && Math.abs(dy) < 120 && swipeStartX > window.innerWidth - 60) toggleSidebar();
     }, { passive: true });
   }
 
