@@ -1064,13 +1064,16 @@ function init() {
     }
     // 1) Scoped-storage plugin (Android SAF via pickFolder + readDir)
     if (window.__TAURI__ && isAndroid) {
+      toast('正在打开文件夹选择器…');
       try {
         const folder = await window.__TAURI__.core.invoke('plugin:scoped-storage|pick_folder', {});
-        if (folder && folder.id) {
-          const mdFiles = await scanScopedFolder(folder.id);
+        const handle = folder && (folder.folder || folder);
+        if (handle && handle.id) {
+          toast('正在扫描文件夹…');
+          const mdFiles = await scanScopedFolder(handle.id);
           if (mdFiles.length) {
-            for (const f of mdFiles) f.__scopedFolderId = folder.id;
-            loadFolder(mdFiles, folder.name || '');
+            for (const f of mdFiles) f.__scopedFolderId = handle.id;
+            loadFolder(mdFiles, handle.name || '');
             return;
           }
           toast('文件夹中没有 .md 文件');
@@ -1078,9 +1081,10 @@ function init() {
         }
         return;
       } catch (e) {
-        if (e && e.code && e.code !== 'CANCELLED') {
-          console.error('Scoped storage:', e);
-          toast('文件夹选择失败');
+        const msg = (e && e.message) || (e && e.code) || String(e);
+        console.error('Scoped storage:', e);
+        if (!msg.includes('CANCELLED') && !msg.includes('cancelled')) {
+          toast('文件夹选择失败: ' + msg);
         }
         return;
       }
@@ -1473,8 +1477,10 @@ if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Me
       try {
         // 验证 folder ID 是否仍有效（scoped-storage 持久化 handle）
         const handles = await window.__TAURI__.core.invoke('plugin:scoped-storage|list_folders', {});
-        const list = Array.isArray(handles) ? handles : (handles && handles.handles ? handles.handles : []);
-        const match = list.find(h => h.id === session.folderId);
+        const list = handles && (handles.folders || handles.handles || (Array.isArray(handles) ? handles : null));
+        if (!list) { clearSession(); return; }
+        const arr = Array.isArray(list) ? list : [];
+        const match = arr.find(h => h.id === session.folderId);
         if (!match) { clearSession(); return; }
         const mdFiles = await scanScopedFolder(match.id);
         if (mdFiles.length) {
