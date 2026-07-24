@@ -190,6 +190,8 @@ input[type="range"] { width: 100%; margin: 4px 0; accent-color: var(--btn-primar
 /* safe area (Android status bar) */
 .android #toolbar { padding-top: calc(0px + env(safe-area-inset-top, 0px)); height: calc(48px + env(safe-area-inset-top, 0px)); }
 .android #sidebar { padding-top: env(safe-area-inset-top, 0px); }
+/* settings panel: avoid overlap with Android status bar */
+.android .settings-panel { padding-top: env(safe-area-inset-top, 0px); }
 /* mobile action sheet */
 .mobile-sheet { display: none; }
 .android .mobile-sheet { display: block; position: fixed; left: 0; right: 0; bottom: 0; z-index: 300; background: var(--panel-bg); border-top: 1px solid var(--border); box-shadow: 0 -4px 20px var(--panel-shadow); transform: translateY(100%); transition: transform .25s ease; touch-action: pan-x; }
@@ -1469,14 +1471,19 @@ if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Me
 
     async function restoreScopedSession(session) {
       try {
-        const mdFiles = await scanScopedFolder(session.folderId);
+        // 验证 folder ID 是否仍有效（scoped-storage 持久化 handle）
+        const handles = await window.__TAURI__.core.invoke('plugin:scoped-storage|list_folders', {});
+        const list = Array.isArray(handles) ? handles : (handles && handles.handles ? handles.handles : []);
+        const match = list.find(h => h.id === session.folderId);
+        if (!match) { clearSession(); return; }
+        const mdFiles = await scanScopedFolder(match.id);
         if (mdFiles.length) {
-          for (const f of mdFiles) f.__scopedFolderId = session.folderId;
-          loadFolder(mdFiles, session.folderName || '');
+          for (const f of mdFiles) f.__scopedFolderId = match.id;
+          loadFolder(mdFiles, match.name || session.folderName || '');
           if (session.activeRelPath && mdFiles.some(f => f.relPath === session.activeRelPath)) {
             loadFolderFileByRel(session.activeRelPath);
           }
-        }
+        } else { clearSession(); }
       } catch { clearSession(); }
     }
 
