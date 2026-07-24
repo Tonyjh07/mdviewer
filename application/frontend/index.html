@@ -391,6 +391,18 @@ input[type="range"] { width: 100%; margin: 4px 0; accent-color: var(--btn-primar
           <input type="checkbox" id="swapTabsCb" style="accent-color:var(--btn-primary);width:16px;height:16px;cursor:pointer;">
           调换侧栏选项卡顺序
         </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:13px;margin-top:8px;">
+          <input type="checkbox" id="swipeSidebarCb" style="accent-color:var(--btn-primary);width:16px;height:16px;cursor:pointer;">
+          滑动打开侧栏
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:13px;margin-top:8px;">
+          <input type="checkbox" id="saveSessionCb" style="accent-color:var(--btn-primary);width:16px;height:16px;cursor:pointer;">
+          保存会话
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:13px;margin-top:8px;">
+          <input type="checkbox" id="autoDarkCb" style="accent-color:var(--btn-primary);width:16px;height:16px;cursor:pointer;">
+          自动暗色模式
+        </label>
       </div>
     </div>
   </div>
@@ -451,6 +463,7 @@ function saveSettings() {
 
 // ---- session persistence (last opened file) ----
 function saveSession(data) {
+  if (state.settings.saveSession === false) return;
   data.sidebarVisible = sidebarVisible;
   const activeTabEl = document.querySelector('.sidebar-tab.active');
   data.activeTab = activeTabEl ? activeTabEl.dataset.panel : 'toc';
@@ -520,7 +533,12 @@ function applySettings() {
   const s = state.settings;
   const root = document.documentElement;
 
-  root.dataset.theme = s.theme || 'light';
+  // Auto dark mode: override theme when using light/dark
+  let theme = s.theme || 'light';
+  if (s.autoDarkMode && (theme === 'light' || theme === 'dark')) {
+    theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  root.dataset.theme = theme;
 
   // Custom colors override
   if (s.theme === 'custom' && s.customColors) {
@@ -621,6 +639,9 @@ function syncSettingUI() {
   document.getElementById('sidebarFontSizeValue').textContent = (s.sidebarFontSize || 13) + 'px';
   document.getElementById('alwaysToolbarCb').checked = !!s.alwaysShowToolbar;
   document.getElementById('swapTabsCb').checked = !!s.swapSidebarTabs;
+  document.getElementById('swipeSidebarCb').checked = s.swipeSidebar !== false;
+  document.getElementById('saveSessionCb').checked = s.saveSession !== false;
+  document.getElementById('autoDarkCb').checked = !!s.autoDarkMode;
   renderShortcutList();
 }
 
@@ -1313,6 +1334,21 @@ function init() {
     state.settings.swapSidebarTabs = e.target.checked; saveSettings(); applySettings();
   });
 
+  // Swipe sidebar checkbox
+  document.getElementById('swipeSidebarCb').addEventListener('change', e => {
+    state.settings.swipeSidebar = e.target.checked; saveSettings();
+  });
+
+  // Save session checkbox
+  document.getElementById('saveSessionCb').addEventListener('change', e => {
+    state.settings.saveSession = e.target.checked; saveSettings();
+  });
+
+  // Auto dark mode checkbox
+  document.getElementById('autoDarkCb').addEventListener('change', e => {
+    state.settings.autoDarkMode = e.target.checked; saveSettings(); applySettings();
+  });
+
   // Scroll: hide toolbar on down, show on up (desktop only)
   let lastScrollY = 0;
   window.addEventListener('scroll', () => {
@@ -1422,6 +1458,7 @@ if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Me
       if (e.touches.length === 1) { swipeStartX = e.touches[0].clientX; swipeStartY = e.touches[0].clientY; }
     }, { passive: true });
     document.addEventListener('touchend', e => {
+      if (state.settings.swipeSidebar === false) return;
       if (e.changedTouches.length !== 1) return;
       const dx = e.changedTouches[0].clientX - swipeStartX;
       const dy = e.changedTouches[0].clientY - swipeStartY;
@@ -1446,6 +1483,11 @@ if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Me
   if (typeof mermaid !== 'undefined') {
     mermaid.initialize({ startOnLoad: false });
   }
+
+  // Auto dark mode: listen for system color scheme changes
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    if (state.settings.autoDarkMode) applySettings();
+  });
 
   function setContentFontSize(pct) {
     const ci = contentInner;
