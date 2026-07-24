@@ -1268,7 +1268,7 @@ if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Me
       btn.addEventListener('click', () => {
         mobileSheet.classList.remove('open');
         const action = btn.dataset.action;
-        if (action === 'openFile') { if (window.__TAURI__) { window.__TAURI__.dialog.open({ filters: [{ name: 'Markdown', extensions: ['md','markdown','mdown'] }] }).then(p => { if (p) window.__TAURI__.core.invoke('read_file', { path: p }).then(d => { if (d) { render(d.content, d.name); saveSession({ type:'tauri', name: d.name, path: d.path }); } }); }); } else { document.getElementById('fileInput').click(); } }
+        if (action === 'openFile') { document.getElementById('fileInput').click(); }
         else if (action === 'openFolder') pickFolder();
         else if (action === 'url') openUrl();
         else if (action === 'sidebar') toggleSidebar();
