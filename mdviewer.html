@@ -1036,19 +1036,34 @@ function init() {
 
   // Folder open
   async function pickFolder() {
+    // 1) File System Access API (Chrome/WebView 86+)
+    if (window.showDirectoryPicker) {
+      try {
+        const dir = await window.showDirectoryPicker();
+        const entries = [];
+        for await (const entry of dir.values()) {
+          if (entry.kind === 'file' && /\.md$/i.test(entry.name)) {
+            const file = await entry.getFile();
+            const text = await file.text();
+            entries.push({ file, name: entry.name, rel_path: entry.name, content: text, full_path: entry.name });
+          }
+        }
+        if (entries.length) { loadFolder(entries, dir.name); return; }
+      } catch (e) { if (e.name === 'AbortError') return; }
+    }
+    // 2) Tauri dialog (works on desktop / some Android)
     if (window.__TAURI__) {
       try {
-        const folderPath = await window.__TAURI__.dialog.open({ directory: true });
-        if (folderPath) {
-          const fd = await window.__TAURI__.core.invoke('scan_folder', { path: folderPath });
-          loadFolder(fd.files, folderPath);
+        const p = await window.__TAURI__.dialog.open({ directory: true });
+        if (p) {
+          const fd = await window.__TAURI__.core.invoke('scan_folder', { path: p });
+          if (fd.files.length) { loadFolder(fd.files, fd.folder_path); return; }
         }
-      } catch (e) {
-        document.getElementById('folderInput').click();
-      }
-    } else {
-      document.getElementById('folderInput').click();
+        return;
+      } catch {}
     }
+    // 3) Fallback: webkitdirectory
+    document.getElementById('folderInput').click();
   }
   document.getElementById('folderBtn').addEventListener('click', pickFolder);
   document.getElementById('folderInput').addEventListener('change', e => {
