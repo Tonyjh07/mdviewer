@@ -560,6 +560,7 @@ function applySettings() {
   applyCodeTheme(s.codeTheme || 'auto');
   syncSettingUI();
   syncCustomColorInputs();
+  if (typeof applyZoomBtn === 'function') applyZoomBtn();
 }
 
 function applyCodeTheme(mode) {
@@ -1447,11 +1448,23 @@ if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Me
     const ci = contentInner;
     if (!ci) return;
     const scrollEl = document.scrollingElement || document.documentElement;
-    const ratio = scrollEl.scrollHeight > scrollEl.clientHeight ? scrollEl.scrollTop / (scrollEl.scrollHeight - scrollEl.clientHeight) : 0;
+    // 记忆视口顶部第一个 #content-inner 后代元素的 offsetTop
+    let anchor = null, anchorOff = 0;
+    const top = scrollEl.scrollTop;
+    const children = ci.querySelectorAll('h1,h2,h3,h4,h5,h6,p,pre,ul,ol,table,blockquote,figure,hr,div.mermaid,div.katex-display');
+    for (const el of children) {
+      const rt = el.getBoundingClientRect();
+      if (rt.top >= 0 && el.offsetTop >= top) {
+        anchor = el;
+        anchorOff = top - el.offsetTop;
+        break;
+      }
+    }
     ci.style.fontSize = pct === 100 ? '' : pct + '%';
     requestAnimationFrame(() => {
-      const max = scrollEl.scrollHeight - scrollEl.clientHeight;
-      if (max > 0) scrollEl.scrollTop = ratio * max;
+      if (anchor) {
+        scrollEl.scrollTop = anchor.offsetTop + anchorOff;
+      }
     });
   }
   let pinchDist = 0, pinchFs = 100, lastTap = 0;
