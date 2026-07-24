@@ -1,6 +1,6 @@
 {
   "productName": "mdviewer",
-  "version": "0.2.4",
+  "version": "0.3.1",
   "identifier": "org.dpdns.tonyjh07.mdviewer",
   "build": {
     "frontendDist": "../frontend"
