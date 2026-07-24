@@ -1036,7 +1036,14 @@ function init() {
 
   // Folder open
   async function pickFolder() {
-    // 1) File System Access API (Chrome/WebView 86+)
+    function toast(msg) {
+      const t = document.createElement('div');
+      t.textContent = msg;
+      Object.assign(t.style, { position:'fixed', bottom:'80px', left:'50%', transform:'translateX(-50%)', background:'var(--panel-bg)', color:'var(--text)', padding:'10px 20px', borderRadius:'8px', boxShadow:'0 2px 12px var(--panel-shadow)', zIndex:'999', fontSize:'13px', border:'1px solid var(--border)' });
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 3000);
+    }
+    // 1) File System Access API
     if (window.showDirectoryPicker) {
       try {
         const dir = await window.showDirectoryPicker();
@@ -1044,26 +1051,27 @@ function init() {
         for await (const entry of dir.values()) {
           if (entry.kind === 'file' && /\.md$/i.test(entry.name)) {
             const file = await entry.getFile();
-            const text = await file.text();
-            entries.push({ file, name: entry.name, rel_path: entry.name, content: text, full_path: entry.name });
+            entries.push({ file, name: entry.name, rel_path: entry.name, full_path: entry.name });
           }
         }
         if (entries.length) { loadFolder(entries, dir.name); return; }
-      } catch (e) { if (e.name === 'AbortError') return; }
+      } catch (e) { console.error('showDirectoryPicker:', e); }
     }
-    // 2) Tauri dialog (works on desktop / some Android)
+    // 2) Tauri dialog
     if (window.__TAURI__) {
       try {
         const p = await window.__TAURI__.dialog.open({ directory: true });
         if (p) {
           const fd = await window.__TAURI__.core.invoke('scan_folder', { path: p });
-          if (fd.files.length) { loadFolder(fd.files, fd.folder_path); return; }
+          if (fd.files && fd.files.length) { loadFolder(fd.files, fd.folder_path); return; }
         }
         return;
-      } catch {}
+      } catch (e) { console.error('Tauri dialog:', e); }
     }
-    // 3) Fallback: webkitdirectory
-    document.getElementById('folderInput').click();
+    // 3) webkitdirectory
+    const fi = document.getElementById('folderInput');
+    fi.click();
+    setTimeout(() => { if (!fi.files.length) toast('文件夹选择不可用，请使用 URL 导入'); }, 1500);
   }
   document.getElementById('folderBtn').addEventListener('click', pickFolder);
   document.getElementById('folderInput').addEventListener('change', e => {
