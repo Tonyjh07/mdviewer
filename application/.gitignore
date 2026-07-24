@@ -1,0 +1,14 @@
+# Android build artifacts
+*.apk
+*.idsig
+*.so
+target/
+src-tauri/target/
+src-tauri/gen/android/app/src/main/jniLibs/
+
+# Node
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db

@@ -2,7 +2,10 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json">
 <link rel="icon" href="favicon.ico" sizes="16x16 32x32">
 <link rel="icon" href="icon-192.png" sizes="192x192">
 <link rel="icon" href="icon-512.png" sizes="512x512">
@@ -184,6 +187,11 @@ input[type="range"] { width: 100%; margin: 4px 0; accent-color: var(--btn-primar
 .android #sidebar.open + #sidebar-overlay { display: block; }
 .android #toolbar.hide { top: 0; }
 .android #sidebar.full { top: 0; }
+/* safe area (Android status bar) */
+.android #toolbar { padding-top: calc(0px + env(safe-area-inset-top, 0px)); height: calc(48px + env(safe-area-inset-top, 0px)); }
+.android #sidebar { padding-top: env(safe-area-inset-top, 0px); }
+/* disable pinch-zoom on chrome elements */
+#toolbar, #sidebar, .overlay, #sidebar-overlay, #dropzone { touch-action: pan-x pan-y; }
 /* print */
 @media print {
   #toolbar, #sidebar, .overlay, #loading, #dropzone { display: none !important; }
@@ -1204,6 +1212,51 @@ if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Me
   applySettings();
   if (typeof mermaid !== 'undefined') {
     mermaid.initialize({ startOnLoad: false });
+  }
+
+  // Custom pinch-zoom on content only
+  let pinchDist = 0, pinchZoom = 1;
+  const contentInner = document.getElementById('content-inner');
+  contentInner.addEventListener('touchstart', e => {
+    if (e.touches.length === 2) {
+      pinchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+      pinchZoom = currentContentZoom;
+    }
+  }, { passive: true });
+  let currentContentZoom = 1;
+  contentInner.addEventListener('touchmove', e => {
+    if (e.touches.length !== 2) return;
+    e.preventDefault();
+    const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+    currentContentZoom = Math.min(3, Math.max(0.5, pinchZoom * (d / pinchDist)));
+    contentInner.style.setProperty('zoom', currentContentZoom);
+  }, { passive: false });
+  contentInner.addEventListener('touchend', e => {
+    if (e.touches.length < 2 && currentContentZoom !== 1) zoomResetBtn.style.display = '';
+  });
+  // double-tap to reset zoom
+  let lastTap = 0;
+  contentInner.addEventListener('touchend', e => {
+    if (e.changedTouches.length === 1 && e.changedTouches[0].screenX < 60) return; // ignore sidebar swipe
+    const now = Date.now();
+    if (now - lastTap < 300 && currentContentZoom !== 1) {
+      currentContentZoom = 1;
+      contentInner.style.removeProperty('zoom');
+      zoomResetBtn.style.display = 'none';
+    }
+    lastTap = now;
+  });
+  // zoom reset button
+  const zoomResetBtn = document.createElement('button');
+  zoomResetBtn.id = 'zoomResetBtn';
+  zoomResetBtn.textContent = '100%';
+  Object.assign(zoomResetBtn.style, { position:'fixed', bottom:'16px', right:'16px', zIndex:'999', padding:'6px 12px', fontSize:'13px', border:'1px solid var(--border)', borderRadius:'20px', background:'var(--toolbar-bg)', color:'var(--text)', cursor:'pointer', display:'none', boxShadow:'0 2px 8px var(--panel-shadow)' });
+  zoomResetBtn.addEventListener('click', () => { currentContentZoom = 1; contentInner.style.removeProperty('zoom'); zoomResetBtn.style.display = 'none'; });
+  document.body.appendChild(zoomResetBtn);
+
+  // Service Worker for offline caching
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
   }
 
   // External links (works on all Tauri platforms, including Android)

@@ -1,3 +1,18 @@
 skills-lock.json
 .agents/
 local_dev_env.md
+
+# Android build artifacts
+*.apk
+*.idsig
+*.so
+application/src-tauri/target/
+application/src-tauri/gen/android/app/src/main/jniLibs/
+
+# Node
+node_modules/
+application/node_modules/
+
+# OS
+.DS_Store
+Thumbs.db

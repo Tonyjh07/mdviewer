@@ -1,0 +1,14 @@
+{
+  "name": "mdviewer",
+  "short_name": "mdviewer",
+  "start_url": "mdviewer.html",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#ffffff",
+  "theme_color": "#3451b2",
+  "description": "A single-file Markdown reader with LaTeX, code highlighting and Mermaid diagrams",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
