@@ -1,6 +1,6 @@
 # mdviewer
 
-一个单文件的 Markdown 阅读器，零构建、双击即用。支持 LaTeX 公式渲染、代码高亮、Mermaid 图表、主题切换与目录导航。可选 Tauri 桌面应用包装。
+一个单文件的 Markdown 阅读器，零构建、双击即用。支持 LaTeX 公式渲染、代码高亮、Mermaid 图表、主题切换与目录导航。可选 Tauri 桌面/移动应用包装。
 
 ## 快速开始
 
@@ -42,7 +42,17 @@
 | 内容宽度 | 窄 / 中 / 宽 / 全宽 |
 | 永不隐藏顶栏 | 勾选后顶栏始终显示，不随滚动自动隐藏 |
 | 侧栏选项卡调换 | 勾选后将「目录」与「文件」页签位置互换 |
+| 滑动打开侧栏 | 移动端是否启用侧栏触摸滑动手势（默认开启） |
+| 保存会话 | 关闭后重新打开时自动恢复上次浏览位置（默认开启） |
+| 自动暗色模式 | 跟随系统颜色，在浅色/深色主题间自动切换（仅 light/dark 主题时生效，默认关闭） |
 | 快捷键 | 8 个操作（打开文件、打开文件夹、切换侧栏、打开 URL、打开选项、增大字号、减小字号、关闭面板）均可自定义快捷键 |
+
+### 内容缩放
+
+支持两种方式调整阅读区字体大小（不影响侧栏和工具栏）：
+- **触摸双指捏合** — 移动端双指缩放，范围 50%–300%；双击重置为 100%
+- **快捷键** — `Ctrl+=` / `Ctrl+-` 缩放（桌面端，调整的是整体字号）
+- 缩放后右下角显示当前百分比按钮，点击重置
 
 ## 支持的语法
 
@@ -86,7 +96,7 @@
 - **原生命名对话框** — 通过 `tauri-plugin-dialog` 打开文件/文件夹，获取真实路径
 - **拖放恢复** — 将文件或文件夹拖入窗口，路径自动保存到本地会话
 - **文件关联** — 在安装包中注册 `.md` / `.markdown` / `.mdown` 扩展，双击直接打开
-- **会话持久化** — 关闭后重新打开，自动恢复上次浏览的文件/文件夹（含侧栏状态）
+- **会话持久化** — 关闭后重新打开，自动恢复上次浏览的文件/文件夹（含侧栏状态），恢复时显示 Toast 提示
 - **外部链接** — 点击 Markdown 中的 `http(s)://` 链接，自动在默认浏览器中打开
 
 ### 开发
@@ -126,6 +136,28 @@ Windows 下生成 NSIS 安装包（`.exe`），位于 `target/release/bundle/nsi
 ```sh
 cp mdviewer.html application/frontend/index.html
 ```
+
+## 移动端 (Android)
+
+`application/` 目录同样支持 Tauri v2 的 Android 构建。
+
+Android 端额外特性：
+- **文件选择** — 通过 `tauri-plugin-dialog` + 浏览器 FileReader 打开 `.md` 文件
+- **文件夹浏览** — 通过 `tauri-plugin-scoped-storage` 使用 SAF `ACTION_OPEN_DOCUMENT_TREE` 选择目录，支持递归浏览与文件切换
+- **侧栏滑动手势** — 从屏幕左侧边缘右滑打开侧栏，在侧栏上左滑关闭
+- **触摸缩放** — 双指捏合缩放内容区，双击重置
+- **底部操作面板** — 工具栏仅保留「菜单」按钮，其余操作收纳在底部弹出面板
+- **会话持久化** — 使用 scoped-storage 持久化 handle ID，重启后自动恢复文件夹视图
+- **安全区域适配** — CSS `env(safe-area-inset-*)` 适配刘海屏
+
+### 构建
+
+```sh
+cd application/src-tauri
+cargo tauri android build --apk
+```
+
+构建产物位于 `src-tauri/gen/android/app/build/outputs/apk/`。
 
 ## 技术栈
 
@@ -167,14 +199,17 @@ mdviewer/
 ├── build.ps1                        # 一键构建脚本（PowerShell）
 ├── build.bat                        # 一键构建批处理（调用 build.ps1，自动绕过策略）
 ├── mdviewer.html                    # 单文件应用（所有 CSS/JS 内联）
-├── application/                     # Tauri 桌面应用包装
+├── application/                     # Tauri 桌面+移动应用包装
 │   ├── frontend/index.html          # 前端页面（mdviewer.html 副本）
 │   └── src-tauri/                   # Rust + Tauri 源码
 │       ├── Cargo.toml
 │       ├── tauri.conf.json
 │       ├── icons/                   # 应用图标
-│       ├── capabilities/            # 权限配置（opener, dialog）
-│       └── src/                     # Rust 入口（get_initial_file, read_file, scan_folder, is_dir）
+│       ├── capabilities/            # 权限配置（opener, dialog, scoped-storage）
+│       └── src/                     # Rust 入口 + 命令（read_file, scan_folder, is_dir）
+├── sw.js                            # Service Worker（离线缓存用）
+├── manifest.json                    # PWA 清单
+├── icons/                           # 源图标（用于生成各平台图标）
 └── README.md                        # 本文件
 ```
 
