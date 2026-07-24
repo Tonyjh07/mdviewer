@@ -1,7 +1,7 @@
 {
   "productName": "mdviewer",
   "version": "0.2.4",
-  "identifier": "com.mdviewer.app",
+  "identifier": "org.dpdns.tonyjh07.mdviewer",
   "build": {
     "frontendDist": "../frontend"
   },
@@ -29,7 +29,8 @@
       "icons/128x128.png",
       "icons/128x128@2x.png",
       "icons/icon.icns",
-      "icons/icon.ico"
+      "icons/icon.ico",
+      "icons/icon.png"
     ],
     "fileAssociations": [
       {

@@ -1,4 +1,4 @@
-package com.mdviewer.app
+package org.dpdns.tonyjh07.mdviewer
 
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge

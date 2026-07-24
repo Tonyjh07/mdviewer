@@ -15,10 +15,10 @@ val tauriProperties = Properties().apply {
 
 android {
     compileSdk = 36
-    namespace = "com.mdviewer.app"
+    namespace = "org.dpdns.tonyjh07.mdviewer"
     defaultConfig {
         manifestPlaceholders["usesCleartextTraffic"] = "false"
-        applicationId = "com.mdviewer.app"
+        applicationId = "org.dpdns.tonyjh07.mdviewer"
         minSdk = 24
         targetSdk = 36
         versionCode = tauriProperties.getProperty("tauri.android.versionCode", "1").toInt()
@@ -38,11 +38,13 @@ android {
         }
         getByName("release") {
             isMinifyEnabled = true
+            isDebuggable = false
             proguardFiles(
                 *fileTree(".") { include("**/*.pro") }
                     .plus(getDefaultProguardFile("proguard-android-optimize.txt"))
                     .toList().toTypedArray()
             )
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
     kotlinOptions {
