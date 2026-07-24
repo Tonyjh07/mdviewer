@@ -1037,10 +1037,14 @@ function init() {
   // Folder open
   async function pickFolder() {
     if (window.__TAURI__) {
-      const folderPath = await window.__TAURI__.dialog.open({ directory: true });
-      if (folderPath) {
-        const fd = await window.__TAURI__.core.invoke('scan_folder', { path: folderPath });
-        loadFolder(fd.files, folderPath);
+      try {
+        const folderPath = await window.__TAURI__.dialog.open({ directory: true });
+        if (folderPath) {
+          const fd = await window.__TAURI__.core.invoke('scan_folder', { path: folderPath });
+          loadFolder(fd.files, folderPath);
+        }
+      } catch (e) {
+        document.getElementById('folderInput').click();
       }
     } else {
       document.getElementById('folderInput').click();
@@ -1266,7 +1270,7 @@ if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Me
       if (e.key === 'Escape' && mobileSheet.classList.contains('open')) mobileSheet.classList.remove('open');
     });
 
-    // 右侧向内滑动切换侧栏
+    // 侧栏手势：右侧向左滑打开 / 左侧向右滑关闭
     let swipeStartX = 0, swipeStartY = 0;
     document.addEventListener('touchstart', e => {
       if (e.touches.length === 1) { swipeStartX = e.touches[0].clientX; swipeStartY = e.touches[0].clientY; }
@@ -1275,7 +1279,9 @@ if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Me
       if (e.changedTouches.length !== 1) return;
       const dx = e.changedTouches[0].clientX - swipeStartX;
       const dy = e.changedTouches[0].clientY - swipeStartY;
-      if (dx < -30 && Math.abs(dy) < 120 && swipeStartX > window.innerWidth - 60) toggleSidebar();
+      if (Math.abs(dy) > 120) return;
+      if (dx < -30 && swipeStartX > window.innerWidth * 0.65 && !sidebarVisible) toggleSidebar();
+      if (dx > 30 && swipeStartX < 40 && sidebarVisible) toggleSidebar();
     }, { passive: true });
   }
 
