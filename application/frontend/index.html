@@ -1271,7 +1271,7 @@ function init() {
       readDirRecursive(entry, '', true).then(files => {
         console.log('[DnD] readDirRecursive resolved with', files.length, 'files:', files.map(f=>f.relPath));
         if (files.length) loadFolder(files);
-        else toast('文件夹中未找到可读取的 .md 文件');
+        else alert('无法直接读取拖入的文件夹，请使用"导入文件夹"按钮打开。');
       });
     } else {
       const file = droppedFiles[0];
