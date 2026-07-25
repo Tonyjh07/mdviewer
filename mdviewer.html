@@ -196,7 +196,7 @@ input[type="range"] { width: 100%; margin: 4px 0; accent-color: var(--btn-primar
 }
 /* Android touch: larger hit targets, always-show toolbar, drawer sidebar */
 .android #toolbar button, .android .btn { min-height: 44px; padding: 8px 12px; font-size: 13px; }
-.android #sidebar { width: 280px; top: 0; z-index: 200; transition: transform .25s ease; transform: translateX(-100%); }
+.android #sidebar { width: 280px; top: 0; z-index: 200; overflow-y: auto; transition: transform .25s ease; transform: translateX(-100%); }
 .android #sidebar.open { transform: translateX(0); }
 .android #sidebar-overlay { display: none; position: fixed; inset: 0; z-index: 199; background: var(--overlay-bg); }
 .android #sidebar.open + #sidebar-overlay { display: block; }
@@ -1179,10 +1179,10 @@ function init() {
       try {
         const dirPath = await window.__TAURI__.dialog.open({ directory: true });
         if (dirPath) {
-          const entries = await window.__TAURI__.fs.readDir(dirPath);
+          const entries = await window.__TAURI__.fs.readDir(dirPath, { recursive: true });
           const mdFiles = entries.filter(e => !e.children && /\.(md|markdown|mdown)$/i.test(e.name));
           if (mdFiles.length) {
-            const mapped = mdFiles.map(e => ({ name: e.name, relPath: e.name, fullPath: e.path }));
+            const mapped = mdFiles.map(e => ({ name: e.name, relPath: e.path.replace(/^.*[/\\]/, ''), fullPath: e.path }));
             const folderName = dirPath.replace(/[/\\]+$/, '').split(/[/\\]/).pop() || dirPath;
             loadFolder(mapped, folderName);
             return;
@@ -1193,17 +1193,24 @@ function init() {
         return;
       } catch (e) { console.error('Tauri folder:', e); }
     }
-    // 3) showDirectoryPicker
-        if (window.showDirectoryPicker) {
+    // 3) showDirectoryPicker (recursive traversal)
+    if (window.showDirectoryPicker) {
       try {
         const dir = await window.showDirectoryPicker();
         const entries = [];
-        for await (const entry of dir.values()) {
-          if (entry.kind === 'file' && /\.md$/i.test(entry.name)) {
-            const file = await entry.getFile();
-            entries.push({ file, name: entry.name, rel_path: entry.name });
+        async function walkDir(handle, prefix) {
+          for await (const entry of handle.values()) {
+            if (entry.kind === 'file') {
+              const file = await entry.getFile();
+              const relPath = prefix ? prefix + '/' + entry.name : entry.name;
+              entries.push({ file, name: entry.name, rel_path: relPath });
+            } else if (entry.kind === 'directory') {
+              const newPrefix = prefix ? prefix + '/' + entry.name : entry.name;
+              await walkDir(entry, newPrefix);
+            }
           }
         }
+        await walkDir(dir, '');
         if (entries.length) { loadFolder(entries, dir.name); return; }
       } catch (e) { if (e.name !== 'AbortError') console.error('showDirectoryPicker:', e); }
     }
@@ -1260,8 +1267,10 @@ function init() {
     if (entry && entry.isDirectory) {
       readDirRecursive(entry, '', true).then(files => {
         if (files.length) loadFolder(files);
+        else if (droppedFiles.length) loadFolder(droppedFiles);
       }).catch(() => {
         if (droppedFiles.length) loadFolder(droppedFiles);
+        else toast('无法读取文件夹中的文件');
       });
     } else {
       const file = droppedFiles[0];
