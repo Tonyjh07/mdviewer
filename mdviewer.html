@@ -917,6 +917,7 @@ function loadFolder(files, folderPath) {
     const file = f.file || f;
     const name = f.name || file.name;
     const relPath = f.relPath || f.rel_path || (f.file && (f.file.webkitRelativePath || f.file.name)) || file.webkitRelativePath || file.name || name;
+    console.log('[loadFolder] name:', name, 'relPath:', relPath, 'test:', name?.match(/\.(md|markdown|mdown)$/i));
     if (name && name.match(/\.(md|markdown|mdown)$/i)) {
       const entry = { name, relPath };
       if (f.fullPath) entry.fullPath = f.fullPath;
@@ -927,7 +928,7 @@ function loadFolder(files, folderPath) {
       mdFiles.push(entry);
     }
   }
-  if (!mdFiles.length) { alert('文件夹中未找到 .md 文件'); return; }
+  if (!mdFiles.length) { console.log('[loadFolder] no md files found'); alert('文件夹中未找到 .md 文件'); return; }
 
   mdFiles.sort((a, b) => a.relPath.localeCompare(b.relPath));
   state.folderFiles = mdFiles;
@@ -1263,12 +1264,16 @@ function init() {
     dropzoneEl.classList.remove('drag-over');
     const dt = e.dataTransfer;
     const droppedFiles = Array.from(dt.files);
+    console.log('[DnD] items:', dt.items?.length, 'files:', droppedFiles.length, 'names:', droppedFiles.map(f=>f.name));
     const entry = dt.items && dt.items[0] && dt.items[0].webkitGetAsEntry && dt.items[0].webkitGetAsEntry();
+    console.log('[DnD] webkitGetAsEntry:', entry?.isDirectory, entry?.name);
     if (entry && entry.isDirectory) {
       readDirRecursive(entry, '', true).then(files => {
+        console.log('[DnD] readDirRecursive resolved with', files.length, 'files:', files.map(f=>f.relPath));
         if (files.length) loadFolder(files);
-        else if (droppedFiles.length) loadFolder(droppedFiles);
-      }).catch(() => {
+        else if (droppedFiles.length) { console.log('[DnD] falling back to droppedFiles'); loadFolder(droppedFiles); }
+      }).catch(err => {
+        console.warn('[DnD] readDirRecursive rejected:', err);
         if (droppedFiles.length) loadFolder(droppedFiles);
         else toast('无法读取文件夹中的文件');
       });
