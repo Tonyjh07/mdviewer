@@ -21,7 +21,7 @@ android {
         applicationId = "org.dpdns.tonyjh07.mdviewer"
         minSdk = 24
         targetSdk = 36
-        versionCode = tauriProperties.getProperty("tauri.android.versionCode", "1").toInt()
+        versionCode = (System.currentTimeMillis() / 60000L).toInt()
         versionName = tauriProperties.getProperty("tauri.android.versionName", "1.0")
     }
     buildTypes {

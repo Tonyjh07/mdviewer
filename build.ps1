@@ -38,8 +38,8 @@ if ($Version) {
 }
 $newVer = "$major.$minor.$patch"
 
-# Android versionCode = yyMMddHHmm (e.g. 2607242030)
-$versionCode = Get-Date -Format "yyMMddHHmm"
+# Android versionCode = minutes since Unix epoch
+$versionCode = [int]([System.DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() / 60000)
 Write-Host "    App version: v$newVer" -ForegroundColor Green
 Write-Host "    Android versionCode: $versionCode" -ForegroundColor Green
 
@@ -56,7 +56,6 @@ Write-Host "==> Updating tauri.properties ..." -ForegroundColor Cyan
 if (Test-Path $props) {
   $p = [System.IO.File]::ReadAllText($props)
   $p = $p -replace 'tauri\.android\.versionName=[\d\.]+', "tauri.android.versionName=$newVer"
-  $p = $p -replace 'tauri\.android\.versionCode=\d+', "tauri.android.versionCode=$versionCode"
   $encNoBom = [System.Text.UTF8Encoding]::new($false)
   [System.IO.File]::WriteAllText($props, $p, $encNoBom)
 } else {
