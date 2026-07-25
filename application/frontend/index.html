@@ -895,7 +895,7 @@ function readDirRecursive(entry, basePath, isRoot) {
       entry.file(f => {
         const relPath = basePath ? basePath + '/' + entry.name : entry.name;
         resolve([{ file: f, relPath }]);
-      }, err => reject(err));
+      }, () => resolve([]));
       return;
     }
     const reader = entry.createReader();
@@ -904,8 +904,8 @@ function readDirRecursive(entry, basePath, isRoot) {
       reader.readEntries(entries => {
         if (entries.length) { all.push(...entries); readBatch(); return; }
         const prefix = isRoot ? '' : (basePath ? basePath + '/' + entry.name : entry.name);
-        Promise.all(all.map(e => readDirRecursive(e, prefix, false))).then(r => resolve(r.flat()), reject);
-      }, err => reject(err));
+        Promise.all(all.map(e => readDirRecursive(e, prefix, false))).then(r => resolve(r.flat()), () => resolve([]));
+      }, () => resolve([]));
     }
     readBatch();
   });
@@ -1271,11 +1271,7 @@ function init() {
       readDirRecursive(entry, '', true).then(files => {
         console.log('[DnD] readDirRecursive resolved with', files.length, 'files:', files.map(f=>f.relPath));
         if (files.length) loadFolder(files);
-        else if (droppedFiles.length) { console.log('[DnD] falling back to droppedFiles'); loadFolder(droppedFiles); }
-      }).catch(err => {
-        console.warn('[DnD] readDirRecursive rejected:', err);
-        if (droppedFiles.length) loadFolder(droppedFiles);
-        else toast('无法读取文件夹中的文件');
+        else toast('文件夹中未找到可读取的 .md 文件');
       });
     } else {
       const file = droppedFiles[0];
