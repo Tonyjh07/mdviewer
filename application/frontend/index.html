@@ -281,7 +281,7 @@ input[type="range"] { width: 100%; margin: 4px 0; accent-color: var(--btn-primar
         </div>
         <div class="android-welcome">
           <div class="logo-large">mdviewer</div>
-          <div class="version">v0.3.2</div>
+          <div class="version">v0.3.3</div>
           <div class="action-list">
             <button class="action-item" data-action="openFile">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
@@ -917,7 +917,6 @@ function loadFolder(files, folderPath) {
     const file = f.file || f;
     const name = f.name || file.name;
     const relPath = f.relPath || f.rel_path || (f.file && (f.file.webkitRelativePath || f.file.name)) || file.webkitRelativePath || file.name || name;
-    console.log('[loadFolder] name:', name, 'relPath:', relPath, 'test:', name?.match(/\.(md|markdown|mdown)$/i));
     if (name && name.match(/\.(md|markdown|mdown)$/i)) {
       const entry = { name, relPath };
       if (f.fullPath) entry.fullPath = f.fullPath;
@@ -928,7 +927,7 @@ function loadFolder(files, folderPath) {
       mdFiles.push(entry);
     }
   }
-  if (!mdFiles.length) { console.log('[loadFolder] no md files found'); alert('文件夹中未找到 .md 文件'); return; }
+  if (!mdFiles.length) { alert('文件夹中未找到 .md 文件'); return; }
 
   mdFiles.sort((a, b) => a.relPath.localeCompare(b.relPath));
   state.folderFiles = mdFiles;
@@ -1264,12 +1263,9 @@ function init() {
     dropzoneEl.classList.remove('drag-over');
     const dt = e.dataTransfer;
     const droppedFiles = Array.from(dt.files);
-    console.log('[DnD] items:', dt.items?.length, 'files:', droppedFiles.length, 'names:', droppedFiles.map(f=>f.name));
     const entry = dt.items && dt.items[0] && dt.items[0].webkitGetAsEntry && dt.items[0].webkitGetAsEntry();
-    console.log('[DnD] webkitGetAsEntry:', entry?.isDirectory, entry?.name);
     if (entry && entry.isDirectory) {
       readDirRecursive(entry, '', true).then(files => {
-        console.log('[DnD] readDirRecursive resolved with', files.length, 'files:', files.map(f=>f.relPath));
         if (files.length) loadFolder(files);
         else alert('无法直接读取拖入的文件夹，请使用"导入文件夹"按钮打开。');
       });
