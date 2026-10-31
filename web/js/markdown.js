@@ -19,7 +19,13 @@ const linkRenderer = {
     // 页内锚点和相对链接不能加 target=_blank，否则 [#小节] 会整页跳走
     const isExternal = /^https?:\/\//i.test(href);
     const attrs = isExternal ? ' target="_blank" rel="noopener noreferrer"' : '';
-    const cls = /^#/.test(href) ? ' class="anchor-link"' : '';
+    // 页内锚点 / 跨文件路径链接分别加不同的 class，便于区分与样式
+    // scheme 至少 2 个字符，单字母的是 Windows 盘符（C:/...），属于本地路径
+    const scheme = (href.match(/^([a-z][a-z0-9+.\-]+):/i) || [])[1];
+    const isLocalFile = href && !isExternal && (!scheme || scheme.toLowerCase() === 'file');
+    let cls = '';
+    if (/^#/.test(href)) cls = ' class="anchor-link"';
+    else if (isLocalFile) cls = ' class="file-link"';
     return `<a href="${escHtml(href)}"${title}${cls}${attrs}>${text}</a>`;
   },
   image(token) {

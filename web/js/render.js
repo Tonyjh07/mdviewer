@@ -1,4 +1,4 @@
-function render(markdown, name) {
+function render(markdown, name, opts) {
   const contentBody = document.getElementById('content-body');
   const dropzone = document.getElementById('dropzone');
   const loading = document.getElementById('loading');
@@ -63,6 +63,11 @@ function render(markdown, name) {
       if (window.location.hash) {
         const hash = window.location.hash.slice(1);
         setTimeout(() => jumpToAnchor(hash, { instant: true, skipHash: true }), 100);
+      }
+      // 渲染完成回调：跨文档锚点跳转等在标题 id 生成后才执行
+      if (opts && typeof opts.afterRender === 'function') {
+        try { opts.afterRender(); }
+        catch (e) { console.warn('[mdviewer] afterRender failed:', e); }
       }
     } catch (e) {
       contentBody.innerHTML = `<div style="color:#c00;padding:40px;text-align:center">渲染错误: ${e.message}</div>`;

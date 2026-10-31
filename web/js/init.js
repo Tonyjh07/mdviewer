@@ -455,51 +455,55 @@ if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Me
   zoomResetBtn.addEventListener('click', resetZoom);
   document.body.appendChild(zoomResetBtn);
 
-  function showToast(msg, duration) {
-    if (duration === undefined) duration = 2500;
-    const t = document.createElement('div');
-    t.textContent = msg;
-    Object.assign(t.style, { position:'fixed', bottom:'60px', right:'16px', zIndex:'999', padding:'8px 14px', fontSize:'12px', borderRadius:'8px', background:'var(--panel-bg)', color:'var(--text)', boxShadow:'0 2px 10px var(--panel-shadow)', border:'1px solid var(--border)', maxWidth:'260px', lineHeight:'1.4', opacity:'0', transition:'opacity .25s ease' });
-    document.body.appendChild(t);
-    requestAnimationFrame(() => { t.style.opacity = '1'; });
-    if (duration > 0) setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, duration);
-    return t;
-  }
-  function dismissToast(el) { if (el) { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); } }
-
   // Service Worker for offline caching
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(() => {});
   }
 
-  // 页内锚点跳转（#标题 / #custom-id / #%E6%A0%87%E9%A2%98）
+  // 内容区链接点击统一处理（页内锚点 / 跨文件路径 / 外链）
+  // 注意：必须用 getAttribute('href') 拿原始值。
+  // link.href 是浏览器解析后的绝对地址，在 Tauri 下锚点会变成
+  // http://tauri.localhost/#标题，被误判成外链而调用 opener.openUrl。
   document.getElementById('content-body').addEventListener('click', e => {
     const link = e.target.closest('a');
     if (!link) return;
-    const href = link.getAttribute('href') || '';
+    const href = (link.getAttribute('href') || '').trim();
+    if (!href) return;
+
+    // 1) 页内锚点
     if (href.startsWith('#')) {
       e.preventDefault();
       const found = jumpToAnchor(href.slice(1));
       link.classList.toggle('anchor-missing', !found);
       return;
     }
-    if (/^(?:https?:|mailto:|tel:)/i.test(href)) return; // 外链交给浏览器 / Tauri opener
+
+    // 2) 外链（http/https/mailto/tel）：交给浏览器或系统默认程序
+    if (/^(?:https?:|mailto:|tel:)/i.test(href)) {
+      if (window.__TAURI__ && window.__TAURI__.opener) {
+        // Ctrl/Cmd/Shift + 点击保留浏览器默认行为（新标签页打开）
+        if (e.ctrlKey || e.metaKey || e.shiftKey) return;
+        e.preventDefault();
+        window.__TAURI__.opener.openUrl(href).catch(() => {});
+      }
+      return;
+    }
+
+    // 3) 其它协议（ftp:、ws: 等）：不支持，提示用户
+    // 注意：scheme 至少 2 个字符，单字母的是 Windows 盘符（C:/...），属于本地路径
+    const scheme = (href.match(/^([a-z][a-z0-9+.\-]+):/i) || [])[1];
+    if (scheme && scheme.toLowerCase() !== 'file') {
+      e.preventDefault();
+      showToast('暂不支持的链接协议：' + scheme + ':');
+      return;
+    }
+
+    // 4) 本地路径链接（相对 / 绝对 / file://）：跨文件跳转
     e.preventDefault();
-    showToast('暂不支持相对链接跳转（可用页内锚点或完整 URL）');
+    openLocalDocLink(href);
   });
 
   initImageLightbox();
-
-  // External links (works on all Tauri platforms, including Android)
-  if (window.__TAURI__) {
-    document.getElementById('content-body').addEventListener('click', e => {
-      const link = e.target.closest('a');
-      if (link && link.href && /^https?:\/\//i.test(link.href)) {
-        e.preventDefault();
-        window.__TAURI__.opener.openUrl(link.href);
-      }
-    });
-  }
 
   // Desktop Tauri: drag-drop, native session restore, CLI arg
   if (isDesktopTauri) {

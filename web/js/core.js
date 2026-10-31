@@ -26,6 +26,20 @@ const state = {
 const isAndroid = /Android/i.test(navigator.userAgent);
 const isDesktopTauri = window.__TAURI__ && !isAndroid;
 
+// ---- 全局提示条 ----
+function showToast(msg, duration) {
+  if (duration === undefined) duration = 2500;
+  const t = document.createElement('div');
+  t.textContent = msg;
+  Object.assign(t.style, { position:'fixed', bottom:'60px', right:'16px', zIndex:'999', padding:'8px 14px', fontSize:'12px', borderRadius:'8px', background:'var(--panel-bg)', color:'var(--text)', boxShadow:'0 2px 10px var(--panel-shadow)', border:'1px solid var(--border)', maxWidth:'260px', lineHeight:'1.4', opacity:'0', transition:'opacity .25s ease' });
+  document.body.appendChild(t);
+  requestAnimationFrame(() => { t.style.opacity = '1'; });
+  if (duration > 0) setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, duration);
+  return t;
+}
+
+function dismissToast(el) { if (el) { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); } }
+
 // ---- settings persistence ----
 function loadSettings() {
   try { return JSON.parse(localStorage.getItem('mdviewer-settings')) || {}; }

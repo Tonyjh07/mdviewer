@@ -226,6 +226,10 @@ input[type="range"] { width: 100%; margin: 4px 0; accent-color: var(--btn-primar
 .anchor-flash { animation: anchorFlash 1.4s ease-out; border-radius: 4px; }
 /* 指向不存在锚点的链接 */
 #content-inner a.anchor-missing { text-decoration: underline dashed; text-underline-offset: 3px; opacity: .85; }
+/* 跨文件路径链接 */
+#content-inner a.file-link { text-decoration: underline dotted; text-underline-offset: 3px; text-decoration-color: var(--text-dim); }
+#content-inner a.file-link::after { content: "\2197"; font-size: .78em; margin-left: .18em; vertical-align: super; opacity: .65; }
+#content-inner a.file-link:hover { text-decoration-style: solid; }
 /* ---- 图片灯箱 ---- */
 #imgLightbox { display: none; position: fixed; inset: 0; z-index: 400; background: var(--overlay-bg); align-items: center; justify-content: center; padding: 24px; cursor: zoom-out; }
 #imgLightbox.open { display: flex; }

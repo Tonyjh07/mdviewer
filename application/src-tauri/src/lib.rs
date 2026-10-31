@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::path::{Component, Path, PathBuf};
 use serde::Serialize;
 
 #[derive(Serialize)]
@@ -83,6 +83,107 @@ fn scan_folder(path: String) -> Result<FolderData, String> {
     }
     files.sort_by(|a, b| a.rel_path.cmp(&b.rel_path));
     Ok(FolderData { folder_path: path, files })
+}
+
+// ---- 跨文件链接（相对 / 绝对路径）解析 ----
+
+/// 十六进制字符转数值
+fn hex_val(b: u8) -> Option<u8> {
+    match b {
+        b'0'..=b'9' => Some(b - b'0'),
+        b'a'..=b'f' => Some(b - b'a' + 10),
+        b'A'..=b'F' => Some(b - b'A' + 10),
+        _ => None,
+    }
+}
+
+/// 百分号解码：%20 -> 空格，%E4%B8%AD -> 中（UTF-8 多字节）
+fn percent_decode(s: &str) -> String {
+    let b = s.as_bytes();
+    let mut out: Vec<u8> = Vec::with_capacity(b.len());
+    let mut i = 0;
+    while i < b.len() {
+        if b[i] == b'%' && i + 2 < b.len() {
+            if let (Some(h), Some(l)) = (hex_val(b[i + 1]), hex_val(b[i + 2])) {
+                out.push(h * 16 + l);
+                i += 3;
+                continue;
+            }
+        }
+        out.push(b[i]);
+        i += 1;
+    }
+    String::from_utf8_lossy(&out).into_owned()
+}
+
+/// 去掉 file:// 协议前缀，还原为本地路径
+fn strip_file_scheme(s: &str) -> String {
+    if let Some(rest) = s.strip_prefix("file://") {
+        // file:///C:/x -> C:/x ；file:///home/u -> /home/u
+        if let Some(drive) = rest.strip_prefix('/') {
+            let bytes = drive.as_bytes();
+            if bytes.len() >= 2 && bytes[0].is_ascii_alphabetic() && bytes[1] == b':' {
+                return drive.to_string();
+            }
+        }
+        return rest.to_string();
+    }
+    s.to_string()
+}
+
+/// 是否"看起来像"绝对路径（跨平台一致：盘符前缀或根斜杠）
+fn is_abs_like(s: &str) -> bool {
+    let b = s.as_bytes();
+    if b.len() >= 3 && b[0].is_ascii_alphabetic() && b[1] == b':' && b[2] == b'/' {
+        return true;
+    }
+    s.starts_with('/')
+}
+
+/// 词法规范化：消解 . 与 ..，不访问文件系统。
+/// 注意：`..` 只回退普通段，不会吃掉盘符或根目录。
+fn normalize_lexically(p: &Path) -> PathBuf {
+    let mut out = PathBuf::new();
+    for c in p.components() {
+        match c {
+            Component::CurDir => {}
+            Component::ParentDir => {
+                // 只有当末段是普通目录时才回退，否则（C:/.. 之类）保持原样
+                if matches!(out.components().next_back(), Some(Component::Normal(_))) {
+                    out.pop();
+                }
+            }
+            other => out.push(other.as_os_str()),
+        }
+    }
+    out
+}
+
+/// 解析 Markdown 文档中的文件路径链接，返回规范化后的绝对路径。
+///
+/// - `base`：当前文档的绝对路径（相对链接以它所在目录为基准）
+/// - `link`：文档中书写的链接（相对或绝对，可能带 URL 编码）
+#[tauri::command]
+fn resolve_doc_path(base: String, link: String) -> Result<String, String> {
+    let decoded = percent_decode(link.trim());
+    let raw = strip_file_scheme(&decoded).replace('\\', "/");
+    if raw.is_empty() {
+        return Err("空链接".into());
+    }
+    let target = Path::new(&raw);
+    let base = Path::new(base.trim());
+    if base.as_os_str().is_empty() {
+        // 没有基准文档时只接受绝对路径
+        if !target.is_absolute() && !is_abs_like(&raw) {
+            return Err("无法确定该相对链接的基准目录".into());
+        }
+        return Ok(normalize_lexically(target).to_string_lossy().to_string());
+    }
+    // Path::join 已能正确处理三种情形：
+    //   绝对路径替换整个结果、带盘符的路径替换、Windows 的 /foo 继承 base 的盘符
+    let dir = base.parent().unwrap_or(base);
+    let joined = dir.join(target);
+    Ok(normalize_lexically(&joined).to_string_lossy().to_string())
 }
 
 /// 判断路径是否为目录（拖放时使用）
@@ -175,6 +276,7 @@ pub fn run() {    tauri::Builder::default()
             scan_folder,
             is_dir,
             read_image,
+            resolve_doc_path,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -225,5 +327,69 @@ mod tests {
         assert!(read_image(dir.to_string_lossy().to_string(), "assets/none.png".into()).is_err());
 
         let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    // ---- 跨文件链接路径解析 ----
+
+    #[test]
+    fn percent_decode_handles_spaces_and_utf8() {
+        assert_eq!(percent_decode("my%20file.md"), "my file.md");
+        assert_eq!(percent_decode("%E4%B8%AD%E6%96%87.md"), "中文.md");
+        assert_eq!(percent_decode("plain.md"), "plain.md");
+        // 非法的转义保持原样，不 panic
+        assert_eq!(percent_decode("100%off.md"), "100%off.md");
+        assert_eq!(percent_decode("a%zzb"), "a%zzb");
+    }
+
+    #[test]
+    fn strip_file_scheme_recovers_drive_letters() {
+        assert_eq!(strip_file_scheme("file:///C:/x/b.md"), "C:/x/b.md");
+        assert_eq!(strip_file_scheme("file:///home/u/b.md"), "/home/u/b.md");
+        assert_eq!(strip_file_scheme("normal.md"), "normal.md");
+    }
+
+    #[test]
+    fn abs_like_detects_drive_and_root() {
+        assert!(is_abs_like("C:/docs"));
+        assert!(is_abs_like("/abs/docs"));
+        assert!(!is_abs_like("docs/b.md"));
+        assert!(!is_abs_like("./b.md"));
+    }
+
+    #[test]
+    fn resolve_doc_path_joins_relative_against_current_doc_dir() {
+        let base = if cfg!(windows) { r"C:\notes\guide.md" } else { "/notes/guide.md" };
+        let out = resolve_doc_path(base.into(), "sub/other.md".into()).unwrap();
+        let expect = if cfg!(windows) { r"C:\notes\sub\other.md" } else { "/notes/sub/other.md" };
+        assert_eq!(PathBuf::from(out), PathBuf::from(expect));
+    }
+
+    #[test]
+    fn resolve_doc_path_resolves_dot_dot_segments() {
+        let base = if cfg!(windows) { r"C:\notes\a\guide.md" } else { "/notes/a/guide.md" };
+        let out = resolve_doc_path(base.into(), "../other.md".into()).unwrap();
+        let expect = if cfg!(windows) { r"C:\notes\other.md" } else { "/notes/other.md" };
+        assert_eq!(PathBuf::from(out), PathBuf::from(expect));
+    }
+
+    #[test]
+    fn resolve_doc_path_keeps_absolute_target_intact() {
+        let base = if cfg!(windows) { r"C:\notes\guide.md" } else { "/notes/guide.md" };
+        let target = if cfg!(windows) { r"D:\elsewhere\other.md" } else { "/elsewhere/other.md" };
+        let out = resolve_doc_path(base.into(), target.into()).unwrap();
+        assert_eq!(PathBuf::from(out), PathBuf::from(target));
+    }
+
+    #[test]
+    fn resolve_doc_path_decodes_percent_escapes() {
+        let base = if cfg!(windows) { r"C:\notes\guide.md" } else { "/notes/guide.md" };
+        let out = resolve_doc_path(base.into(), "my%20doc.md".into()).unwrap();
+        let expect = if cfg!(windows) { r"C:\notes\my doc.md" } else { "/notes/my doc.md" };
+        assert_eq!(PathBuf::from(out), PathBuf::from(expect));
+    }
+
+    #[test]
+    fn resolve_doc_path_rejects_empty_link() {
+        assert!(resolve_doc_path("guide.md".into(), "   ".into()).is_err());
     }
 }

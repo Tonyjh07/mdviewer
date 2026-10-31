@@ -1,6 +1,6 @@
 # mdviewer
 
-一个零构建的 Markdown 阅读器，双击即用。支持 LaTeX 公式渲染、代码高亮、Mermaid 图表、图片渲染、页内锚点跳转、主题切换与目录导航。可选 Tauri 桌面/移动应用包装。
+一个零构建的 Markdown 阅读器，双击即用。支持 LaTeX 公式渲染、代码高亮、Mermaid 图表、图片渲染、页内锚点跳转、跨文件链接、主题切换与目录导航。可选 Tauri 桌面/移动应用包装。
 
 ## 快速开始
 
@@ -101,6 +101,18 @@
 - 支持 `#中文标题`、`#Title-Case`、URL 编码形式（`#%E6%A0%87%E9%A2%98`）
 - 不存在的锚点不会跳转，链接会加虚线标记提示
 - 建议：标题自动生成的 id 规则为「小写 + 标点转 `-`」，保留中文
+
+### 跨文件链接
+- 支持链接到其它 Markdown 文档：相对路径（`./sub/other.md`、`../other.md`）与绝对路径（`C:\docs\other.md`、`/abs/path/other.md`）
+- 也支持 `file://` 前缀与 URL 编码（`my%20doc.md`）写法
+- 跨文档锚点：`[文字](other.md#章节)` — 目标文档渲染完成后自动定位到对应标题
+- 路径基准随文档切换自动更新（跳转后文档内的相对链接与相对图片继续正确解析）
+- 各端行为：
+  - **桌面版** — 相对路径以当前文档所在目录为基准；绝对路径直接读取；非 Markdown 文件（如 PDF）交给系统默认程序打开
+  - **文件夹模式（桌面 / Android）** — 在已打开的文件夹内按相对路径查找，文件树高亮同步到目标文件
+  - **浏览器文件夹模式** — 在已加载的文件列表内按相对路径查找
+  - **URL 导入** — 相对地址相对于该 Markdown 的 URL 解析
+- 跨文件链接在正文中带 ↗ 标记与点状下划线，便于与普通链接区分
 
 ### 其他渲染特性
 - 标题自动生成锚点，鼠标悬停显示 `#` 链接
@@ -226,6 +238,7 @@ mdviewer/
 │   │   ├── media.js                 # 图片相对路径解析、失败占位、灯箱
 │   │   ├── render.js                # 渲染管线、标题锚点、目录构建
 │   │   ├── file.js                  # 文件/文件夹加载、文件树
+│   │   ├── nav.js                   # 跨文件链接：相对/绝对路径解析与跨文档锚点跳转
 │   │   ├── ui.js                    # 侧栏、URL 导入、字号、面板开关
 │   │   └── init.js                  # 应用装配、事件绑定、移动端手势
 │   ├── sw.js                        # Service Worker（离线缓存用）
@@ -237,7 +250,7 @@ mdviewer/
 │       ├── tauri.conf.json
 │       ├── icons/                   # 应用图标
 │       ├── capabilities/            # 权限配置（opener, dialog, scoped-storage）
-│       └── src/                     # Rust 入口 + 命令（read_file, scan_folder, is_dir, read_image）
+│       └── src/                     # Rust 入口 + 命令（read_file, scan_folder, is_dir, read_image, resolve_doc_path）
 └── README.md                        # 本文件
 ```
 
