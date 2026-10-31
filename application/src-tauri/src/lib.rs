@@ -91,9 +91,80 @@ fn is_dir(path: String) -> bool {
     std::path::Path::new(&path).is_dir()
 }
 
+// ---- 图片读取（Markdown 相对路径图片） ----
+
+const B64_CHARS: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+/// 极简 base64 编码，避免为一张图片引入额外依赖
+fn base64_encode(data: &[u8]) -> String {
+    let mut out = String::with_capacity((data.len() + 2) / 3 * 4);
+    for chunk in data.chunks(3) {
+        let b0 = chunk[0] as u32;
+        let b1 = *chunk.get(1).unwrap_or(&0) as u32;
+        let b2 = *chunk.get(2).unwrap_or(&0) as u32;
+        let n = (b0 << 16) | (b1 << 8) | b2;
+        out.push(B64_CHARS[((n >> 18) & 63) as usize] as char);
+        out.push(B64_CHARS[((n >> 12) & 63) as usize] as char);
+        if chunk.len() > 1 {
+            out.push(B64_CHARS[((n >> 6) & 63) as usize] as char);
+        } else {
+            out.push('=');
+        }
+        if chunk.len() > 2 {
+            out.push(B64_CHARS[(n & 63) as usize] as char);
+        } else {
+            out.push('=');
+        }
+    }
+    out
+}
+
+fn image_mime(path: &Path) -> &'static str {
+    match path
+        .extension()
+        .and_then(|e| e.to_str())
+        .unwrap_or("")
+        .to_ascii_lowercase()
+        .as_str()
+    {
+        "png" => "image/png",
+        "jpg" | "jpeg" => "image/jpeg",
+        "gif" => "image/gif",
+        "webp" => "image/webp",
+        "svg" => "image/svg+xml",
+        "bmp" => "image/bmp",
+        "ico" => "image/x-icon",
+        "avif" => "image/avif",
+        "tif" | "tiff" => "image/tiff",
+        _ => "application/octet-stream",
+    }
+}
+
+/// 读取 Markdown 文档里的相对路径图片，返回 data URL。
+/// base 为 md 文件所在目录，rel 为文档中的原始相对路径。
+#[tauri::command]
+fn read_image(base: String, rel: String) -> Result<String, String> {
+    let base_path = Path::new(&base);
+    let dir = if base_path.is_dir() {
+        base_path.to_path_buf()
+    } else {
+        base_path.parent().map(|p| p.to_path_buf()).unwrap_or_else(|| base_path.to_path_buf())
+    };
+    let target = dir.join(rel.trim_start_matches('/'));
+
+    let meta = std::fs::metadata(&target).map_err(|e| format!("{}: {}", target.display(), e))?;
+    if !meta.is_file() {
+        return Err(format!("{} 不是文件", target.display()));
+    }
+    if meta.len() > 64 * 1024 * 1024 {
+        return Err("图片超过 64MB".into());
+    }
+    let data = std::fs::read(&target).map_err(|e| e.to_string())?;
+    Ok(format!("data:{};base64,{}", image_mime(&target), base64_encode(&data)))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
-pub fn run() {
-    tauri::Builder::default()
+pub fn run() {    tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
@@ -103,7 +174,56 @@ pub fn run() {
             read_file,
             scan_folder,
             is_dir,
+            read_image,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn base64_matches_reference_vectors() {
+        assert_eq!(base64_encode(b""), "");
+        assert_eq!(base64_encode(b"f"), "Zg==");
+        assert_eq!(base64_encode(b"fo"), "Zm8=");
+        assert_eq!(base64_encode(b"foo"), "Zm9v");
+        assert_eq!(base64_encode(b"foob"), "Zm9vYg==");
+        assert_eq!(base64_encode(b"fooba"), "Zm9vYmE=");
+        assert_eq!(base64_encode(b"foobar"), "Zm9vYmFy");
+    }
+
+    #[test]
+    fn mime_is_guessed_from_extension() {
+        assert_eq!(image_mime(Path::new("a/b/pic.PNG")), "image/png");
+        assert_eq!(image_mime(Path::new("pic.jpeg")), "image/jpeg");
+        assert_eq!(image_mime(Path::new("pic.svg")), "image/svg+xml");
+        assert_eq!(image_mime(Path::new("weird.xyz")), "application/octet-stream");
+    }
+
+    #[test]
+    fn read_image_joins_relative_path_against_markdown_dir() {
+        let dir = std::env::temp_dir().join("mdviewer_read_image_test");
+        let assets = dir.join("assets");
+        std::fs::create_dir_all(&assets).unwrap();
+        let file = assets.join("pic.png");
+        std::fs::write(&file, [0x89u8, b'P', b'N', b'G']).unwrap();
+
+        // base 传 md 所在目录
+        let url = read_image(dir.to_string_lossy().to_string(), "assets/pic.png".into()).unwrap();
+        assert_eq!(url, "data:image/png;base64,iVBORw==");
+
+        // base 传 md 文件本身时取父目录
+        let md_path = dir.join("doc.md");
+        std::fs::write(&md_path, "# hi").unwrap();
+        let url2 = read_image(md_path.to_string_lossy().to_string(), "assets/pic.png".into()).unwrap();
+        assert_eq!(url2, url);
+
+        // 不存在的图片返回错误而不是 panic
+        assert!(read_image(dir.to_string_lossy().to_string(), "assets/none.png".into()).is_err());
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
 }

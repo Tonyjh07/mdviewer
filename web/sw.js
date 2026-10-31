@@ -1,10 +1,12 @@
-const CACHE = 'mdviewer-v2';
+const CACHE = 'mdviewer-v3';
 const URLS = [
   './',
   './app.css',
   './js/core.js',
   './js/theme.js',
   './js/markdown.js',
+  './js/links.js',
+  './js/media.js',
   './js/render.js',
   './js/file.js',
   './js/ui.js',

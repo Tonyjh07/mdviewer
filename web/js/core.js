@@ -18,6 +18,9 @@ const state = {
   fileName: '',
   folderFiles: [],       // Array<{file, name, relPath, fullPath}>
   folderPath: '',        // Tauri: 已打开文件夹的路径
+  docFiles: null,        // Map<normalizedRelPath, File>：文件夹模式下所有文件（用于解析相对图片）
+  docBlobUrls: [],       // 已创建的 blob URL，重渲染前释放
+  docSource: { kind: 'none' }, // 当前文档基准位置，见 media.js
   settings: loadSettings()
 };
 const isAndroid = /Android/i.test(navigator.userAgent);

@@ -2,17 +2,45 @@
 function escHtml(s) {
   return s.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
+
+// 保留链接文字里的行内格式（加粗 / 行内代码等）
+function renderInline(renderer, token) {
+  if (renderer && renderer.parser && token.tokens) {
+    try { return renderer.parser.parseInline(token.tokens); } catch { /* 回退到纯文本 */ }
+  }
+  return escHtml(token.text || '');
+}
+
 const linkRenderer = {
   link(token) {
-    const { href, title, text, tokens } = token;
-    return `<a href="${escHtml(href)}"${title ? ` title="${escHtml(title)}"` : ''} target="_blank" rel="noopener noreferrer">${escHtml(text)}</a>`;
+    const href = token.href || '';
+    const title = token.title ? ` title="${escHtml(token.title)}"` : '';
+    const text = renderInline(this, token);
+    // 页内锚点和相对链接不能加 target=_blank，否则 [#小节] 会整页跳走
+    const isExternal = /^https?:\/\//i.test(href);
+    const attrs = isExternal ? ' target="_blank" rel="noopener noreferrer"' : '';
+    const cls = /^#/.test(href) ? ' class="anchor-link"' : '';
+    return `<a href="${escHtml(href)}"${title}${cls}${attrs}>${text}</a>`;
   },
   image(token) {
     const { href, title, text } = token;
-    return `<img src="${escHtml(href)}" alt="${escHtml(text || '')}"${title ? ` title="${escHtml(title)}"` : ''} loading="lazy">`;
+    return `<img src="${escHtml(href || '')}" alt="${escHtml(text || '')}"${title ? ` title="${escHtml(title)}"` : ''} loading="lazy" decoding="async">`;
   }
 };
 marked.use({ renderer: linkRenderer, gfm: true, breaks: false });
+
+// ---- 支持标题自定义锚点：## 标题 {#custom-id} ----
+// 转成一个临时标记元素，随后由 addHeadingAnchors 取走并删除
+function extractHeadingIds(md) {
+  const parts = String(md).split(/(```[\s\S]*?```|~~~[\s\S]*?~~~)/);
+  return parts.map((part, i) => {
+    if (i % 2 === 1) return part; // 围栏代码块内不处理
+    return part.replace(
+      /^(#{1,6}[ \t]+[^\n]*?)[ \t]*\{#([^}\s]+)\}[ \t]*$/gm,
+      (_, head, id) => `${head} <a data-anchor-id="${escHtml(id)}"></a>`
+    );
+  }).join('');
+}
 
 // ---- preprocess math before markdown parsing (handles nesting reliably) ----
 function protectMath(md) {

@@ -8,7 +8,7 @@ function init() {
       });
       if (path) {
         const data = await window.__TAURI__.core.invoke('read_file', { path });
-        if (data) { render(data.content, data.name); saveSession({ type: 'tauri', name: data.name, path }); }
+        if (data) { setDocSource({ kind: 'file', docPath: data.path || path }); render(data.content, data.name); saveSession({ type: 'tauri', name: data.name, path }); }
       }
     } else {
       document.getElementById('fileInput').click();
@@ -472,6 +472,24 @@ if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Me
     navigator.serviceWorker.register('sw.js').catch(() => {});
   }
 
+  // 页内锚点跳转（#标题 / #custom-id / #%E6%A0%87%E9%A2%98）
+  document.getElementById('content-body').addEventListener('click', e => {
+    const link = e.target.closest('a');
+    if (!link) return;
+    const href = link.getAttribute('href') || '';
+    if (href.startsWith('#')) {
+      e.preventDefault();
+      const found = jumpToAnchor(href.slice(1));
+      link.classList.toggle('anchor-missing', !found);
+      return;
+    }
+    if (/^(?:https?:|mailto:|tel:)/i.test(href)) return; // 外链交给浏览器 / Tauri opener
+    e.preventDefault();
+    showToast('暂不支持相对链接跳转（可用页内锚点或完整 URL）');
+  });
+
+  initImageLightbox();
+
   // External links (works on all Tauri platforms, including Android)
   if (window.__TAURI__) {
     document.getElementById('content-body').addEventListener('click', e => {
@@ -499,7 +517,7 @@ if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Me
       if (mdPaths.length) {
         try {
           const data = await window.__TAURI__.core.invoke('read_file', { path: mdPaths[0] });
-          if (data) { render(data.content, data.name); saveSession({ type: 'tauri', name: data.name, path: mdPaths[0] }); }
+          if (data) { setDocSource({ kind: 'file', docPath: data.path || mdPaths[0] }); render(data.content, data.name); saveSession({ type: 'tauri', name: data.name, path: mdPaths[0] }); }
         } catch {}
       }
     }
@@ -551,7 +569,7 @@ if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Me
           if (session.path) {
             try {
               const d = await window.__TAURI__.core.invoke('read_file', { path: session.path });
-              if (d) { render(d.content, d.name); saveSession({ type: 'tauri', name: d.name, path: d.path }); }
+              if (d) { setDocSource({ kind: 'file', docPath: d.path || session.path }); render(d.content, d.name); saveSession({ type: 'tauri', name: d.name, path: d.path }); }
             } catch { clearSession(); }
           } else if (session.folderPath) {
             const toastEl = showToast('正在恢复上次的会话…', 0);
@@ -570,6 +588,7 @@ if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Me
       }
       window.__TAURI__.core.invoke('get_initial_file').then(data => {
         if (data) {
+          setDocSource({ kind: 'file', docPath: data.path });
           render(data.content, data.name);
           saveSession({ type: 'tauri', name: data.name, path: data.path });
         } else {

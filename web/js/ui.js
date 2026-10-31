@@ -16,7 +16,7 @@ function fetchUrl(url) {
   document.getElementById('loading').classList.add('show');
   fetch(url)
     .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
-    .then(text => { if (seq !== urlLoadSeq) return; let name = (url.split('/').pop() || url).split('?')[0].split('#')[0]; try { name = decodeURIComponent(name); } catch {} render(text, name); closeUrl(); saveSession({ type: 'url', url, name }); })
+    .then(text => { if (seq !== urlLoadSeq) return; let name = (url.split('/').pop() || url).split('?')[0].split('#')[0]; try { name = decodeURIComponent(name); } catch {} let docUrl = url; try { docUrl = new URL(url, location.href).href; } catch {} setDocSource({ kind: 'url', docUrl }); state.docFiles = null; render(text, name); closeUrl(); saveSession({ type: 'url', url, name }); })
     .catch(e => { if (seq === urlLoadSeq) alert('获取失败: ' + e.message); })
     .finally(() => { if (seq === urlLoadSeq) document.getElementById('loading').classList.remove('show'); });
 }

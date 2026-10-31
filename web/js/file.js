@@ -7,6 +7,8 @@ function loadFile(file) {
     return;
   }
   const seq = ++fileLoadSeq;
+  setDocSource({ kind: 'none' });
+  state.docFiles = null; // 单文件模式没有可用的文件映射，清掉上一次文件夹的残留
   const reader = new FileReader();
   reader.onload = e => {
     if (seq === fileLoadSeq) {
@@ -42,10 +44,16 @@ function readDirRecursive(entry, basePath, isRoot) {
 
 function loadFolder(files, folderPath) {
   const mdFiles = [];
+  const fileMap = new Map();
   for (const f of files) {
     const file = f.file || f;
     const name = f.name || file.name;
     const relPath = f.relPath || f.rel_path || (f.file && (f.file.webkitRelativePath || f.file.name)) || file.webkitRelativePath || file.name || name;
+    // 记录全部文件（含图片），用于解析 Markdown 里的相对路径图片
+    if (file instanceof File) {
+      const rel = f.relPath || f.rel_path || file.webkitRelativePath || '';
+      if (rel) fileMap.set(normalizeRel(rel).toLowerCase(), file);
+    }
     if (name && name.match(/\.(md|markdown|mdown)$/i)) {
       const entry = { name, relPath };
       if (f.fullPath) entry.fullPath = f.fullPath;
@@ -61,6 +69,7 @@ function loadFolder(files, folderPath) {
   mdFiles.sort((a, b) => a.relPath.localeCompare(b.relPath));
   state.folderFiles = mdFiles;
   state.folderPath = folderPath || '';
+  state.docFiles = fileMap.size ? fileMap : null;
 
   document.getElementById('noFolderMsg').style.display = 'none';
   renderFileTree();
@@ -156,6 +165,7 @@ function loadFolderFileByRel(relPath) {
   });
 
   if (item.__scopedFolderId) {
+    setDocSource({ kind: 'scoped', folderId: item.__scopedFolderId, relPath: item.relPath });
     const seq = ++loadSeq;
     window.__TAURI__.core.invoke('plugin:scoped-storage|read_text_file', {
       req: { folderId: item.__scopedFolderId, path: item.relPath }
@@ -166,6 +176,7 @@ function loadFolderFileByRel(relPath) {
   } else if ((item.fullPath || item.full_path) && (isDesktopTauri || window.__TAURI__)) {
     const seq = ++loadSeq;
     const path = item.fullPath || item.full_path;
+    setDocSource({ kind: 'folder', docPath: path, relPath: item.relPath });
     (path.startsWith('content://') ? window.__TAURI__.fs.readTextFile(path) : window.__TAURI__.core.invoke('read_file', { path })).then(data => {
       if (seq !== loadSeq) return;
       if (data) {
@@ -174,6 +185,7 @@ function loadFolderFileByRel(relPath) {
       }
     }).catch(() => {});
   } else if (item.file) {
+    setDocSource({ kind: 'folder', relPath: item.relPath });
     const seq = ++loadSeq;
     const reader = new FileReader();
     reader.onload = e => {

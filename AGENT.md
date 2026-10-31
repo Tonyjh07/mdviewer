@@ -56,7 +56,7 @@ Agents can invoke mdviewer's rendering pipeline directly from Node.js or browser
 
 ```javascript
 // The core render pipeline (works in any JS context)
-const { text, blocks } = protectMath(markdownSource);
+const { text, blocks } = protectMath(extractHeadingIds(markdownSource));
 let html = marked.parse(text);
 html = html.replace(/\x00M_(\d+)\x00/g, (_, idx) => {
   const b = blocks[+idx];
@@ -206,9 +206,12 @@ Nine themes via `[data-theme="light"|dark|sepia|nord|gruvbox|monokai|solarized|s
 
 ## Notes & Quirks
 
-- **Zero-build multi-file frontend**: `web/` holds `index.html` + `app.css` + seven JS files loaded as classic (non-module) `<script>` tags. They all share one global scope and **must load in order**: `core → theme → markdown → render → file → ui → init`. No bundler, no `type="module"`, so `file://` double-click still works (ES modules would break it via CORS).
+- **Zero-build multi-file frontend**: `web/` holds `index.html` + `app.css` + nine JS files loaded as classic (non-module) `<script>` tags. They all share one global scope and **must load in order**: `core → theme → markdown → links → media → render → file → ui → init`. No bundler, no `type="module"`, so `file://` double-click still works (ES modules would break it via CORS).
 - **Single frontend source**: `tauri.conf.json` points `frontendDist` at `../../web`, so the browser build and the Tauri bundle consume the same files. There is no copy/sync step. `build.ps1` only rewrites the display version inside `web/index.html`.
-- **Serial dependencies in JS**: `core.js` defines the shared `state` object; the remaining files add top-level functions and a few module-level `let` bindings (`renderTimeout`, `tocObserver`, `fileLoadSeq`, `activeRelPath`, `loadSeq`, `urlLoadSeq`, `capturingShortcut`, `sidebarVisible`). Keeping this flat global surface is deliberate for stage 1 — extracting ES modules requires rewriting all cross-file references.
+- **Serial dependencies in JS**: `core.js` defines the shared `state` object; the remaining files add top-level functions and a few module-level `let` bindings (`renderTimeout`, `tocObserver`, `fileLoadSeq`, `activeRelPath`, `loadSeq`, `urlLoadSeq`, `capturingShortcut`, `sidebarVisible`, `lightboxEl`). Keeping this flat global surface is deliberate for stage 1 — extracting ES modules requires rewriting all cross-file references.
+- **Sidebar scrolling**: `#sidebar` owns an explicit height (`calc(100dvh - 48px)`, `100dvh` when `.full`) and hides overflow; each `.sidebar-panel` uses `flex: 1; min-height: 0; overflow-y: auto`. The `min-height: 0` is load-bearing — without it the flex item refuses to shrink below content height and the panel never scrolls (this was the original bug).
+- **Image resolution** (`media.js`): `state.docSource` records where the current document came from (`none` / `url` / `file` / `folder` / `scoped`). Relative `src` values are resolved against it: URL import → `new URL(src, docUrl)`; desktop Tauri → `read_image` Rust command returning a base64 data URL; Android SAF → `plugin:scoped-storage|read_file` bytes → blob URL; browser folder mode → `state.docFiles` map of `relPath → File` → blob URL. Single-file browser mode cannot resolve siblings and renders a placeholder with instructions. Blob URLs are tracked in `state.docBlobUrls` and revoked at the start of every render.
+- **Anchors** (`links.js`): `jumpToAnchor()` resolves `#target` by exact id → `getElementsByName` → slug variants (`slugifyHeading`, `githubSlug`, lowercase) → heading text match. Headings get `scroll-margin-top: 64px` so jumps clear the sticky toolbar. The link renderer must NOT add `target="_blank"` to non-http links, otherwise `#section` links open a new tab instead of scrolling (previous bug). `## Title {#custom-id}` is pre-processed into a temporary `<a data-anchor-id>` marker that `addHeadingAnchors()` consumes.
 - **Android scoped-storage response wrapping**: Kotlin-side commands wrap responses differently from Rust-side commands. The JS adapter layer handles both — e.g., `folder.folder || folder` for `pick_folder`, `handles.folders` for `list_folders`, `entries.entries` for `read_dir`.
 - **Zoom scroll preservation**: `setContentFontSize()` remembers the element at the viewport top via `elementFromPoint()` before changing font size, then applies scroll delta via `requestAnimationFrame` to prevent viewport jumping.
 - **Auto dark mode**: Only active when the selected theme is `light` or `dark`. Selecting any other theme (sepia, nord, monokai, custom, etc.) disables auto-follow of the system color scheme.
