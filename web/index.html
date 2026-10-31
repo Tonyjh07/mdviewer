@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="favicon.ico" sizes="16x16 32x32">
+<link rel="icon" href="icon-192.png" sizes="192x192">
+<link rel="icon" href="icon-512.png" sizes="512x512">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>mdviewer</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+<link id="hljs-theme" rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/stackoverflow-light.min.css" crossorigin="anonymous">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<div id="app">
+  <header id="toolbar">
+    <div class="logo">mdviewer</div>
+    <div id="fileName"></div>
+    <div class="toolbar-group">
+      <button id="openBtn" title="打开 .md 文件">打开</button>
+      <button id="folderBtn" title="打开文件夹">文件夹</button>
+      <button id="urlBtn" title="从 URL 导入">URL</button>
+      <button id="sidebarBtn" title="侧栏">侧栏</button>
+      <button id="settingsBtn" title="选项">选项</button>
+      <a href="https://github.com/Tonyjh07/mdviewer" target="_blank" rel="noopener noreferrer" class="github-icon" title="GitHub" aria-label="GitHub 仓库"><svg viewBox="0 0 24 24" width="27" height="27" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg></a>
+      <button id="menuBtn" title="更多" style="display:none"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></button>
+    </div>
+  </header>
+  <div id="mobileSheet" class="mobile-sheet">
+    <div class="mobile-sheet-content">
+      <div class="mobile-sheet-items">
+        <button class="mobile-sheet-btn" data-action="openFile"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg><span>打开文件</span></button>
+        <button class="mobile-sheet-btn" data-action="openFolder"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg><span>打开文件夹</span></button>
+        <button class="mobile-sheet-btn" data-action="url"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><span>URL</span></button>
+        <button class="mobile-sheet-btn" data-action="sidebar"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg><span>侧栏</span></button>
+        <button class="mobile-sheet-btn" data-action="settings"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>选项</span></button>
+        <a href="https://github.com/Tonyjh07/mdviewer" target="_blank" rel="noopener noreferrer" class="mobile-sheet-btn" data-action="github" style="text-decoration:none"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg><span>GitHub</span></a>
+      </div>
+      <div class="mobile-sheet-handle"></div>
+    </div>
+  </div>
+  <div id="main">
+    <aside id="sidebar">
+      <div class="sidebar-tabs">
+        <button class="sidebar-tab active" data-panel="files">文件</button>
+        <button class="sidebar-tab" data-panel="toc">目录</button>
+      </div>
+      <div id="filesPanel" class="sidebar-panel active">
+        <div id="noFolderMsg" style="padding:32px 16px;text-align:center;color:var(--text-dim);font-size:13px;">打开文件夹后<br>文件列表将显示在此</div>
+        <div id="fileTree" class="tree" style="display:none"></div>
+      </div>
+      <div id="tocPanel" class="sidebar-panel"></div>
+    </aside>
+    <main id="content">
+      <div id="content-inner">
+        <div id="content-body"></div>
+        <div id="dropzone">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <p>拖入 Markdown 文件，或点击上方按钮</p>
+          <div class="sub">支持 .md 文件 / 文件夹 / URL 导入 / LaTeX 公式渲染</div>
+        </div>
+        <div class="android-welcome">
+          <div class="logo-large">mdviewer</div>
+          <div class="version">v0.3.3</div>
+          <div class="action-list">
+            <button class="action-item" data-action="openFile">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+              <div class="action-text"><strong>打开文件</strong><span>选择本机 .md 文件</span></div>
+            </button>
+            <button class="action-item" data-action="openFolder">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+              <div class="action-text"><strong>打开文件夹</strong><span>浏览文件夹中的 Markdown 文件</span></div>
+            </button>
+            <button class="action-item" data-action="url">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+              <div class="action-text"><strong>URL 导入</strong><span>从网络链接加载 Markdown</span></div>
+            </button>
+          </div>
+          <div class="feature-list">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg> 支持 LaTeX 公式 / Mermaid 图表<br>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg> 多主题 / 字体缩放 / 会话保存<br>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg> 支持离线缓存（PWA）<br>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg> ← 从左侧边缘右滑打开侧栏
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <div id="loading"><div class="spinner"></div><span>渲染中...</span></div>
+</div>
+
+<div id="settingsOverlay" class="overlay">
+  <div class="settings-panel">
+    <div class="settings-header">
+      <h2>选项</h2>
+      <button id="closeSettingsBtn">&#x2715;</button>
+    </div>
+    <div class="settings-body">
+      <div class="setting-group">
+        <label>主题</label>
+        <div class="setting-row" id="themeGroup">
+          <button class="opt-btn" data-value="light">浅色</button>
+          <button class="opt-btn" data-value="dark">深色</button>
+          <button class="opt-btn" data-value="sepia">护眼</button>
+          <button class="opt-btn" data-value="nord">Nord</button>
+          <button class="opt-btn" data-value="gruvbox">Gruvbox</button>
+          <button class="opt-btn" data-value="monokai">Monokai</button>
+          <button class="opt-btn" data-value="solarized">Solarized</button>
+          <button class="opt-btn" data-value="solarized-dark">Solarized Dark</button>
+          <button class="opt-btn" data-value="custom">自定义</button>
+        </div>
+      </div>
+      <div class="setting-group" id="customColorsGroup" style="display:none">
+        <label>自定义颜色</label>
+        <div class="color-grid">
+          <div class="color-item"><label>背景</label><input type="color" id="cBg"></div>
+          <div class="color-item"><label>文字</label><input type="color" id="cText"></div>
+          <div class="color-item"><label>标题</label><input type="color" id="cHeading"></div>
+          <div class="color-item"><label>链接</label><input type="color" id="cLink"></div>
+          <div class="color-item"><label>代码背景</label><input type="color" id="cCodeBg"></div>
+          <div class="color-item"><label>边框</label><input type="color" id="cBorder"></div>
+        </div>
+      </div>
+      <div class="setting-group">
+        <label>代码高亮</label>
+        <div class="setting-row" id="codeThemeGroup">
+          <button class="opt-btn" data-value="auto">自动</button>
+          <button class="opt-btn" data-value="light">浅色</button>
+          <button class="opt-btn" data-value="dark">深色</button>
+        </div>
+      </div>
+      <div class="setting-group">
+        <label>字号 <span class="value" id="fontSizeValue">16px</span></label>
+        <input type="range" id="fontSizeRange" min="12" max="48" value="16" step="1">
+      </div>
+      <div class="setting-group">
+        <label>行高 <span class="value" id="lineHeightValue">1.75</span></label>
+        <input type="range" id="lineHeightRange" min="1.3" max="2.2" value="1.75" step="0.05">
+      </div>
+      <div class="setting-group">
+        <label>字体</label>
+        <div class="setting-row" id="fontFamilyGroup">
+          <button class="opt-btn" data-value="sans">无衬线</button>
+          <button class="opt-btn" data-value="serif">衬线</button>
+          <button class="opt-btn" data-value="mono">等宽</button>
+        </div>
+      </div>
+      <div class="setting-group">
+        <label>内容宽度</label>
+        <div class="setting-row" id="widthGroup">
+          <button class="opt-btn" data-value="narrow">窄</button>
+          <button class="opt-btn" data-value="medium">中</button>
+          <button class="opt-btn" data-value="wide">宽</button>
+          <button class="opt-btn" data-value="full">全宽</button>
+        </div>
+      </div>
+      <div class="setting-group">
+        <label>侧栏字号 <span class="value" id="sidebarFontSizeValue">13px</span></label>
+        <input type="range" id="sidebarFontSizeRange" min="10" max="24" value="13" step="1">
+      </div>
+      <div class="setting-group" style="border-top:1px solid var(--border);padding-top:14px;">
+        <label>快捷键（点击修改）</label>
+        <div class="shortcut-list" id="shortcutList"></div>
+      </div>
+      <div class="setting-group" style="border-top:1px solid var(--border);padding-top:14px;">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:13px;">
+          <input type="checkbox" id="alwaysToolbarCb" style="accent-color:var(--btn-primary);width:16px;height:16px;cursor:pointer;">
+          始终显示顶栏
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:13px;margin-top:8px;">
+          <input type="checkbox" id="swapTabsCb" style="accent-color:var(--btn-primary);width:16px;height:16px;cursor:pointer;">
+          调换侧栏选项卡顺序
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:13px;margin-top:8px;">
+          <input type="checkbox" id="swipeSidebarCb" style="accent-color:var(--btn-primary);width:16px;height:16px;cursor:pointer;">
+          滑动打开侧栏
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:13px;margin-top:8px;">
+          <input type="checkbox" id="saveSessionCb" style="accent-color:var(--btn-primary);width:16px;height:16px;cursor:pointer;">
+          保存会话
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:13px;margin-top:8px;">
+           <input type="checkbox" id="autoDarkCb" style="accent-color:var(--btn-primary);width:16px;height:16px;cursor:pointer;">
+           自动暗色模式
+         </label>
+         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:13px;margin-top:8px;">
+           <input type="checkbox" id="autoDetectLatexCb" style="accent-color:var(--btn-primary);width:16px;height:16px;cursor:pointer;">
+          无定界符 LaTeX 兼容
+         </label>
+       </div>
+    </div>
+  </div>
+</div>
+
+<div id="urlOverlay" class="overlay">
+  <div class="dialog">
+    <h3>从 URL 导入</h3>
+    <input type="url" id="urlInput" placeholder="https://raw.githubusercontent.com/..." autocomplete="off">
+    <div class="dialog-actions">
+      <button class="btn btn-primary" id="urlFetchBtn">获取</button>
+      <button class="btn" id="closeUrlBtn">取消</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="fileInput" accept=".md,.markdown,.mdown" hidden>
+<input type="file" id="folderInput" webkitdirectory hidden>
+
+<script src="https://cdn.jsdelivr.net/npm/marked@15.0.12/marked.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.16.0/dist/mermaid.min.js" crossorigin="anonymous"></script>
+<script src="js/core.js"></script>
+<script src="js/theme.js"></script>
+<script src="js/markdown.js"></script>
+<script src="js/render.js"></script>
+<script src="js/file.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/init.js"></script>
+</body>
+</html>

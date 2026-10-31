@@ -1,10 +1,12 @@
 # mdviewer
 
-一个单文件的 Markdown 阅读器，零构建、双击即用。支持 LaTeX 公式渲染、代码高亮、Mermaid 图表、主题切换与目录导航。可选 Tauri 桌面/移动应用包装。
+一个零构建的 Markdown 阅读器，双击即用。支持 LaTeX 公式渲染、代码高亮、Mermaid 图表、主题切换与目录导航。可选 Tauri 桌面/移动应用包装。
 
 ## 快速开始
 
-直接双击 `mdviewer.html` 在浏览器中打开即可使用。无需安装、无需构建、无需服务端。
+直接双击 `web/index.html` 在浏览器中打开即可使用。无需安装、无需构建、无需服务端。
+
+> 前端全部为静态文件，也可部署到任意静态托管（Cloudflare Pages 等）。
 
 ## 使用方式
 
@@ -129,13 +131,10 @@ cargo tauri build
 
 Windows 下生成 NSIS 安装包（`.exe`），位于 `target/release/bundle/nsis/`。
 
-### 更新前端
+### 前端目录
 
-`application/frontend/index.html` 是 `mdviewer.html` 的副本，改动后需同步：
-
-```sh
-cp mdviewer.html application/frontend/index.html
-```
+`web/` 是唯一的前端目录，浏览器版与 Tauri 桌面/移动端共用，无需任何同步或复制步骤。
+修改 `web/` 下的文件后，重新执行构建即可（`build.ps1` 会自动写入版本号）。
 
 ## 移动端 (Android)
 
@@ -198,20 +197,32 @@ cargo tauri android build --apk
 mdviewer/
 ├── build.ps1                        # 一键构建脚本（PowerShell）
 ├── build.bat                        # 一键构建批处理（调用 build.ps1，自动绕过策略）
-├── mdviewer.html                    # 单文件应用（所有 CSS/JS 内联）
+├── web/                             # 前端目录（浏览器版与 Tauri 共用）
+│   ├── index.html                   # 页面骨架
+│   ├── app.css                      # 全部样式（含 9 套主题变量）
+│   ├── js/
+│   │   ├── core.js                  # 主题色板、全局 state、设置与会话持久化、快捷键
+│   │   ├── theme.js                 # 主题应用与设置面板同步
+│   │   ├── markdown.js              # marked 配置、LaTeX 预处理
+│   │   ├── render.js                # 渲染管线、标题锚点、目录构建
+│   │   ├── file.js                  # 文件/文件夹加载、文件树
+│   │   ├── ui.js                    # 侧栏、URL 导入、字号、面板开关
+│   │   └── init.js                  # 应用装配、事件绑定、移动端手势
+│   ├── sw.js                        # Service Worker（离线缓存用）
+│   ├── manifest.json                # PWA 清单
+│   └── favicon/icon-*.png           # 站点图标
 ├── application/                     # Tauri 桌面+移动应用包装
-│   ├── frontend/index.html          # 前端页面（mdviewer.html 副本）
-│   └── src-tauri/                   # Rust + Tauri 源码
+│   └── src-tauri/                   # Rust + Tauri 源码（frontendDist 指向 ../../web）
 │       ├── Cargo.toml
 │       ├── tauri.conf.json
 │       ├── icons/                   # 应用图标
 │       ├── capabilities/            # 权限配置（opener, dialog, scoped-storage）
 │       └── src/                     # Rust 入口 + 命令（read_file, scan_folder, is_dir）
-├── sw.js                            # Service Worker（离线缓存用）
-├── manifest.json                    # PWA 清单
-├── icons/                           # 源图标（用于生成各平台图标）
 └── README.md                        # 本文件
 ```
+
+> 脚本按 `core → theme → markdown → render → file → ui → init` 顺序加载于同一全局作用域，
+> 顺序不可调整（后加载的脚本依赖先加载的顶层声明）。
 
 ## License
 

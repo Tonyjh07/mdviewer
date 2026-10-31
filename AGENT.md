@@ -7,13 +7,13 @@
 
 ## What It Is
 
-mdviewer is a zero-build, single-file Markdown reader that renders `.md` content with KaTeX formulas, highlight.js syntax highlighting, and Mermaid diagrams entirely client-side via CDN libraries. It ships as a standalone HTML file (browser-ready) and an optional Tauri v2 wrapper for desktop (Windows/macOS/Linux) and Android with native file dialogs, folder browsing via SAF/scoped-storage, file associations, and session persistence.
+mdviewer is a zero-build Markdown reader that renders `.md` content with KaTeX formulas, highlight.js syntax highlighting, and Mermaid diagrams entirely client-side via CDN libraries. The frontend is a plain static site in `web/` (one HTML shell + external CSS/JS, no bundler) served directly by the browser or packaged by an optional Tauri v2 wrapper for desktop (Windows/macOS/Linux) and Android with native file dialogs, folder browsing via SAF/scoped-storage, file associations, and session persistence.
 
 ## 4 Primitives
 
 | Primitive | Method | Description |
 |-----------|--------|-------------|
-| INIT | `mdviewer.html` open / `cargo tauri dev` | Load the single-page app in browser or Tauri webview; state initialised from `localStorage` |
+| INIT | `web/index.html` open / `cargo tauri dev` | Load the static site in browser or Tauri webview; state initialised from `localStorage` |
 | INJECT | Drag-and-drop / `fileInput.click()` / `window.__TAURI__.core.invoke('read_file')` | Feed a Markdown file, folder tree, or remote URL into the render pipeline |
 | EXTRACT | `contentBody.innerHTML` / Rust command return value | Rendered HTML (with KaTeX, highlight.js, Mermaid) is written to `#content-body`; plain text or metadata available via DOM / IPC |
 | KILL | Browser tab close / `process.exit()` / Tauri window close | No persistent background state; `saveSettings()` flushes to `localStorage` before unload |
@@ -21,7 +21,7 @@ mdviewer is a zero-build, single-file Markdown reader that renders `.md` content
 ## Installation
 
 ### Browser (no build)
-No installation required. Double-click `mdviewer.html` in any modern browser. All libraries load from CDN on demand.
+No installation required. Double-click `web/index.html` in any modern browser. All libraries load from CDN on demand.
 
 ### Desktop (Tauri)
 ```bash
@@ -43,7 +43,7 @@ cargo tauri android build --apk
 
 ### Browser (direct)
 
-Open `mdviewer.html` in any browser. All features work without a server:
+Open `web/index.html` in any browser. All features work without a server:
 
 - **Open file**: Click toolbar "打开" or press `Ctrl+O` → native file picker → FileReader reads the `.md` file → `render(markdown, name)` parses and displays
 - **Open folder**: Click "文件夹" or drag a folder onto the window → `readDirRecursive()` scans with `webkitGetAsEntry()` → sidebar file tree → click any `.md` to load
@@ -206,8 +206,9 @@ Nine themes via `[data-theme="light"|dark|sepia|nord|gruvbox|monokai|solarized|s
 
 ## Notes & Quirks
 
-- **Single-file constraint**: `mdviewer.html` contains all CSS, HTML, and JS inline. The Service Worker (`sw.js`) and manifest (`manifest.json`) must remain separate files per browser spec.
-- **Frontend must be synced**: `application/frontend/index.html` is an exact copy of `mdviewer.html`. Use `Copy-Item` after every edit. Build scripts (`build.ps1` / `build.bat`) do this automatically.
+- **Zero-build multi-file frontend**: `web/` holds `index.html` + `app.css` + seven JS files loaded as classic (non-module) `<script>` tags. They all share one global scope and **must load in order**: `core → theme → markdown → render → file → ui → init`. No bundler, no `type="module"`, so `file://` double-click still works (ES modules would break it via CORS).
+- **Single frontend source**: `tauri.conf.json` points `frontendDist` at `../../web`, so the browser build and the Tauri bundle consume the same files. There is no copy/sync step. `build.ps1` only rewrites the display version inside `web/index.html`.
+- **Serial dependencies in JS**: `core.js` defines the shared `state` object; the remaining files add top-level functions and a few module-level `let` bindings (`renderTimeout`, `tocObserver`, `fileLoadSeq`, `activeRelPath`, `loadSeq`, `urlLoadSeq`, `capturingShortcut`, `sidebarVisible`). Keeping this flat global surface is deliberate for stage 1 — extracting ES modules requires rewriting all cross-file references.
 - **Android scoped-storage response wrapping**: Kotlin-side commands wrap responses differently from Rust-side commands. The JS adapter layer handles both — e.g., `folder.folder || folder` for `pick_folder`, `handles.folders` for `list_folders`, `entries.entries` for `read_dir`.
 - **Zoom scroll preservation**: `setContentFontSize()` remembers the element at the viewport top via `elementFromPoint()` before changing font size, then applies scroll delta via `requestAnimationFrame` to prevent viewport jumping.
 - **Auto dark mode**: Only active when the selected theme is `light` or `dark`. Selecting any other theme (sepia, nord, monokai, custom, etc.) disables auto-follow of the system color scheme.

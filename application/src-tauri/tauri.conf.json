@@ -3,7 +3,7 @@
   "version": "0.3.2",
   "identifier": "org.dpdns.tonyjh07.mdviewer",
   "build": {
-    "frontendDist": "../frontend"
+    "frontendDist": "../../web"
   },
   "app": {
     "withGlobalTauri": true,

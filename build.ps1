@@ -12,8 +12,7 @@ $src = [System.IO.Path]::Combine($root, "application", "src-tauri")
 $cargo = [System.IO.Path]::Combine($src, "Cargo.toml")
 $conf = [System.IO.Path]::Combine($src, "tauri.conf.json")
 $props = [System.IO.Path]::Combine($src, "gen", "android", "app", "tauri.properties")
-$md = [System.IO.Path]::Combine($root, "mdviewer.html")
-$frontend = [System.IO.Path]::Combine($root, "application", "frontend", "index.html")
+$md = [System.IO.Path]::Combine($root, "web", "index.html")
 
 # ---- version ----
 Write-Host "==> Reading version ..." -ForegroundColor Cyan
@@ -62,15 +61,11 @@ if (Test-Path $props) {
   Write-Host "    (gen/android/app/tauri.properties not found — skipping)" -ForegroundColor Yellow
 }
 
-Write-Host "==> Updating mdviewer.html display version ..." -ForegroundColor Cyan
+Write-Host "==> Updating web/index.html display version ..." -ForegroundColor Cyan
 $mdContent = [System.IO.File]::ReadAllText($md)
 $mdContent = $mdContent -replace '(class="version">)v[\d\.]+', "`$1v$newVer"
 $encNoBom = [System.Text.UTF8Encoding]::new($false)
 [System.IO.File]::WriteAllText($md, $mdContent, $encNoBom)
-
-Write-Host "==> Syncing frontend ..." -ForegroundColor Cyan
-Copy-Item -LiteralPath $md -Destination $frontend -Force
-Write-Host "    Copied to: $frontend" -ForegroundColor Green
 
 if (-not $SyncOnly) {
   if ($Android) {

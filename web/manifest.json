@@ -1,7 +1,8 @@
 {
   "name": "mdviewer",
   "short_name": "mdviewer",
-  "start_url": "mdviewer.html",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#ffffff",

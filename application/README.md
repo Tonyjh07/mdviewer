@@ -42,23 +42,18 @@ cargo tauri android build --apk   # Android APK
 - **文件打开** — 通过 `tauri-plugin-dialog` + 浏览器 FileReader 读取 `.md` 文件
 - **触摸交互** — 双指缩放、侧栏滑动、双击重置、安全区域适配
 
-## 更新前端
+## 前端目录
 
-`application/frontend/index.html` 是 `mdviewer.html` 的副本。每当根目录的 `mdviewer.html` 更新后，需同步：
-
-```sh
-cp ../mdviewer.html frontend/index.html
-```
+前端源码位于仓库根目录的 `web/`，`tauri.conf.json` 的 `frontendDist` 指向 `../../web`。
+浏览器版与 Tauri 桌面/移动端共用同一份文件，**无需任何复制或同步步骤**。
 
 ## 项目结构
 
 ```
 application/
-├── frontend/
-│   └── index.html               # 前端页面（mdviewer.html 副本）
 └── src-tauri/
     ├── Cargo.toml               # Rust 依赖（含 tauri-plugin-scoped-storage）
-    ├── tauri.conf.json          # Tauri 配置（窗口大小、标题、Android 标识符等）
+    ├── tauri.conf.json          # Tauri 配置（frontendDist=../../web、Windows 窗口、Android 标识符等）
     ├── icons/                   # 应用图标（各平台）
     ├── capabilities/            # 权限配置（opener, dialog, scoped-storage）
     └── src/

@@ -20,3 +20,6 @@ Thumbs.db
 # Android NDK（本地工具链，不入库）
 ndk/
 android-ndk-r27d-windows.zip
+
+# 本地项目记忆（不入库）
+.workbuddy/

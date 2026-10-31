@@ -1,7 +1,14 @@
-const CACHE = 'mdviewer-v1';
+const CACHE = 'mdviewer-v2';
 const URLS = [
   './',
-  './mdviewer.html',
+  './app.css',
+  './js/core.js',
+  './js/theme.js',
+  './js/markdown.js',
+  './js/render.js',
+  './js/file.js',
+  './js/ui.js',
+  './js/init.js',
   './manifest.json',
   'https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css',
   'https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/stackoverflow-light.min.css',
