@@ -186,10 +186,41 @@ Android 端额外特性：
 
 ```sh
 cd application/src-tauri
-cargo tauri android build --apk
+cargo tauri android build --apk                 # 全部 ABI，慢
+cargo tauri android build --apk --target aarch64 # 只出 arm64，现代手机够用
 ```
 
-构建产物位于 `src-tauri/gen/android/app/build/outputs/apk/`。
+或者用脚本（会顺带同步版本号）：
+
+```powershell
+.\build.ps1 -Android
+```
+
+构建产物位于 `src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk`。
+默认用 debug 证书签名，可直接安装；上架应用商店需自行配置发布签名。
+
+### 环境要求
+
+| 项 | 版本 | 说明 |
+|---|---|---|
+| JDK | 17 ~ 21 | JDK 25 会与 AGP 8.11 冲突，用 Zulu/JDK 21 最稳 |
+| SDK Platform | android-36 | 与 `compileSdk = 36` 对应 |
+| Build-Tools | **35.0.0** | AGP 8.11 默认写死这个版本，缺了会报 `Failed to find Build Tools revision 35.0.0` |
+| NDK | r27（如 `android-ndk-r27d`） | 通过 `NDK_HOME` / `ANDROID_NDK_HOME` 指定 |
+| Rust targets | `aarch64-linux-android` 等 | `rustup target add aarch64-linux-android` |
+
+必装 Build-Tools 35.0.0（其它版本装了也不算数）：
+
+```sh
+sdkmanager --sdk_root="$ANDROID_HOME" "build-tools;35.0.0"
+```
+
+### 已知坑
+
+- **必须用 `cargo tauri android build` 驱动**，不要直接跑 `gen/android/gradlew`。Gradle 的 `rustBuild*` 任务会执行 `cargo tauri android android-studio-script`，该子命令要连 CLI 侧起的 WebSocket，单独跑必然报 `ConnectionRefused`。
+- **`gen/android/buildSrc/build.gradle.kts` 的仓库必须保留阿里云镜像**。它原先只有 `google()` + `mavenCentral()`，国内直连 `dl.google.com` 会 `Network is unreachable`，构建卡死且没有任何报错输出。
+- **Gradle 需要能从 PATH 找到 cargo**。如果报 `A problem occurred starting process 'command 'cargo.bat''`，先 `.\gradlew --stop`，再把 `%USERPROFILE%\.cargo\bin` 加进 PATH 后重跑（daemon 会缓存启动时的环境）。
+- 构建日志不要用 `| tail` 接到后台任务上，管道缓冲区塞满后会静默卡死，改用重定向到文件。
 
 ## 技术栈
 

@@ -12,6 +12,8 @@ gradlePlugin {
 }
 
 repositories {
+    maven { setUrl("https://maven.aliyun.com/repository/google") }
+    maven { setUrl("https://maven.aliyun.com/repository/public") }
     google()
     mavenCentral()
 }

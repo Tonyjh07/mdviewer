@@ -25,5 +25,8 @@ mdviewer 的硬性约定。只收录改代码时**必须遵守**的约束；功�
 - 改动 `web/` 下任何文件后，把 `sw.js` 的 `CACHE` 版本号 +1，否则浏览器版用户拿不到更新。
 
 ## 构建与验证
-- 发版走 `build.ps1`（默认 bump，`-NoBump` 保持版本）。它会同步 `Cargo.toml`、`tauri.conf.json`、`web/index.html` 三处版本号，不要手改其中任意一处。
+- 发版走 `build.ps1`（默认 bump，`-NoBump` 保持版本）。它会同步 `Cargo.toml`、`tauri.conf.json`、`web/index.html` 三处版本号，不要手改其中任意一处。Android 包用 `-Android`。
 - 改动 Rust 侧逻辑后必须 `cargo test --lib` 全绿。
+- Android 构建必须由 `cargo tauri android build` 驱动，不要直接跑 `gen/android/gradlew`：Gradle 的 `rustBuild*` 任务会调 `cargo tauri android android-studio-script`，该子命令依赖 CLI 侧启动的 WebSocket。
+- `gen/android/buildSrc/build.gradle.kts` 的阿里云镜像不能删。只有 `google()` 时国内会卡在直连 `dl.google.com` 且无任何报错。
+- 后台构建命令的输出不要接 `| tail`：管道缓冲区塞满会静默卡死，重定向到文件。
