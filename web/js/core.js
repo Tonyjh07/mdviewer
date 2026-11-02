@@ -21,6 +21,8 @@ const state = {
   docFiles: null,        // Map<normalizedRelPath, File>：文件夹模式下所有文件（用于解析相对图片）
   docBlobUrls: [],       // 已创建的 blob URL，重渲染前释放
   docSource: { kind: 'none' }, // 当前文档基准位置，见 media.js
+  currentMarkdown: '',   // 当前正文原文（跨文件跳转的撤销快照要用）
+  currentName: '',       // 当前文档显示名
   settings: loadSettings()
 };
 const isAndroid = /Android/i.test(navigator.userAgent);
@@ -31,7 +33,7 @@ function showToast(msg, duration) {
   if (duration === undefined) duration = 2500;
   const t = document.createElement('div');
   t.textContent = msg;
-  Object.assign(t.style, { position:'fixed', bottom:'60px', right:'16px', zIndex:'999', padding:'8px 14px', fontSize:'12px', borderRadius:'8px', background:'var(--panel-bg)', color:'var(--text)', boxShadow:'0 2px 10px var(--panel-shadow)', border:'1px solid var(--border)', maxWidth:'260px', lineHeight:'1.4', opacity:'0', transition:'opacity .25s ease' });
+  Object.assign(t.style, { position:'fixed', bottom:'112px', right:'16px', zIndex:'999', padding:'8px 14px', fontSize:'12px', borderRadius:'8px', background:'var(--panel-bg)', color:'var(--text)', boxShadow:'0 2px 10px var(--panel-shadow)', border:'1px solid var(--border)', maxWidth:'260px', lineHeight:'1.4', opacity:'0', transition:'opacity .25s ease' });
   document.body.appendChild(t);
   requestAnimationFrame(() => { t.style.opacity = '1'; });
   if (duration > 0) setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, duration);

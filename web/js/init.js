@@ -451,9 +451,12 @@ if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Me
   }
   const zoomResetBtn = document.createElement('button');
   zoomResetBtn.id = 'zoomResetBtn';
-  Object.assign(zoomResetBtn.style, { position:'fixed', bottom:'16px', right:'16px', zIndex:'999', padding:'6px 12px', fontSize:'13px', border:'1px solid var(--border)', borderRadius:'20px', background:'var(--toolbar-bg)', color:'var(--text)', cursor:'pointer', display:'none', boxShadow:'0 2px 8px var(--panel-shadow)' });
+  Object.assign(zoomResetBtn.style, { position:'fixed', bottom:'70px', right:'16px', zIndex:'997', padding:'6px 12px', fontSize:'13px', border:'1px solid var(--border)', borderRadius:'20px', background:'var(--toolbar-bg)', color:'var(--text)', cursor:'pointer', display:'none', boxShadow:'0 2px 8px var(--panel-shadow)' });
   zoomResetBtn.addEventListener('click', resetZoom);
   document.body.appendChild(zoomResetBtn);
+
+  // 右下角「返回」FAB：跨文件跳转时可连续撤销
+  initNavBackButton();
 
   // Service Worker 只服务于浏览器版的离线缓存。
   // Tauri 桌面/移动端的资源已经内嵌在安装包里，注册 SW 毫无意义，
@@ -533,6 +536,8 @@ if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Me
       if (mdPaths.length) {
         try {
           const data = await window.__TAURI__.core.invoke('read_file', { path: mdPaths[0] });
+          // 拖入新文档 = 换根，清掉上一份文档的跨文件返回记录
+          if (data && typeof clearNavHistory === 'function') clearNavHistory();
           if (data) { setDocSource({ kind: 'file', docPath: data.path || mdPaths[0] }); render(data.content, data.name); saveSession({ type: 'tauri', name: data.name, path: mdPaths[0] }); }
         } catch {}
       }

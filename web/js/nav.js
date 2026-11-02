@@ -43,6 +43,93 @@ function navigateToDoc(content, name, fragment) {
   });
 }
 
+// ---- 跨文件跳转的返回栈 ----
+//
+// 跳进 a.md → sub/b.md 之后，只能靠目标文档自己写了「返回上级」链接才回得去；
+// 大多数文档不会写。这里在每次跨文件跳转前把当前现场压栈，右下角 FAB 出栈还原，
+// 支持连续撤销。
+//
+// 只记录跨文件跳转：页内锚点（#章节）不换文档，不进栈。
+const NAV_HISTORY_MAX = 30;
+const navHistory = [];
+
+let navBackBtn = null;
+
+function initNavBackButton() {
+  if (navBackBtn) return navBackBtn;
+  const btn = document.createElement('button');
+  btn.id = 'navBackBtn';
+  btn.type = 'button';
+  btn.innerHTML = '<span class="nav-back-arrow">↩</span><span class="nav-back-text">返回</span><span class="nav-back-count"></span>';
+  btn.addEventListener('click', undoNav);
+  // 右键清空：连续翻了很多层时不用点十几次
+  btn.addEventListener('contextmenu', e => {
+    e.preventDefault();
+    if (!navHistory.length) return;
+    clearNavHistory();
+    showToast('已清除返回记录');
+  });
+  document.body.appendChild(btn);
+  navBackBtn = btn;
+  updateNavBackBtn();
+  return btn;
+}
+
+function updateNavBackBtn() {
+  if (!navBackBtn) return;
+  const n = navHistory.length;
+  navBackBtn.classList.toggle('show', n > 0);
+  const badge = navBackBtn.querySelector('.nav-back-count');
+  if (badge) badge.textContent = n > 1 ? String(n) : '';
+  navBackBtn.title = n > 1
+    ? `返回上一个文档（还剩 ${n} 步，右键清除记录）`
+    : '返回上一个文档';
+}
+
+// 记录跳转前的现场。读不到正文时不记（例如从空状态出发）
+function pushNavSnapshot() {
+  if (!state.currentMarkdown) return false;
+  const ds = docSource();
+  navHistory.push({
+    markdown: state.currentMarkdown,
+    name: state.currentName || '',
+    docSource: ds ? Object.assign({}, ds) : { kind: 'none' },
+    scrollY: window.scrollY || 0,
+    activeRelPath: typeof activeRelPath === 'string' ? activeRelPath : '',
+    folderPath: state.folderPath || ''
+  });
+  if (navHistory.length > NAV_HISTORY_MAX) navHistory.shift();
+  updateNavBackBtn();
+  return true;
+}
+
+function clearNavHistory() {
+  navHistory.length = 0;
+  updateNavBackBtn();
+}
+
+// 出栈并还原：正文、基准位置、文件树高亮、滚动位置
+function undoNav() {
+  const snap = navHistory.pop();
+  if (!snap) return;
+  setDocSource(snap.docSource);
+  state.folderPath = snap.folderPath || '';
+  clearHash();
+  if (snap.activeRelPath) highlightTreeFile(snap.activeRelPath);
+  render(snap.markdown, snap.name, {
+    afterRender: () => {
+      if (!snap.scrollY) return;
+      // html 上是 scroll-behavior: smooth，跨文档恢复位置必须用 instant，
+      // 否则会看到一段长长的滚动动画
+      const restore = () => window.scrollTo({ top: snap.scrollY, behavior: 'instant' });
+      restore();
+      // 图片（blob URL）解码后高度会变，补一帧再校正一次
+      requestAnimationFrame(restore);
+    }
+  });
+  updateNavBackBtn();
+}
+
 // 用 FileReader 读取文本文件
 function readFileAsText(file) {
   return new Promise((resolve, reject) => {
@@ -143,6 +230,7 @@ async function openLocalDocLink(rawHref) {
       if (!looksLikeMarkdown(res, target.href)) { showToast('该链接不是 Markdown 文档'); return; }
       const text = await res.text();
       const name = decodeURIComponentSafe(fileNameOf(target.pathname)) || 'index.md';
+      pushNavSnapshot();
       state.docFiles = null;
       setDocSource({ kind: 'url', docUrl: target.href });
       navigateToDoc(text, name, fragment);
@@ -159,6 +247,7 @@ async function openLocalDocLink(rawHref) {
         req: { folderId: ds.folderId, path: rel }
       });
       if (!result || !result.contents) { showToast('无法读取：' + rel); return; }
+      pushNavSnapshot();
       setDocSource({ kind: 'scoped', folderId: ds.folderId, relPath: rel });
       navigateToDoc(result.contents, rel, fragment);
       return;
@@ -186,6 +275,7 @@ async function openLocalDocLink(rawHref) {
       const entry = findFolderEntryByPath(abs);
       if (entry) {
         // 目标在已打开的文件夹树内：同步高亮并保持文件夹上下文
+        pushNavSnapshot();
         highlightTreeFile(entry.relPath);
         setDocSource({ kind: 'folder', docPath: abs, relPath: entry.relPath });
         navigateToDoc(data.content, entry.relPath, fragment);
@@ -193,6 +283,7 @@ async function openLocalDocLink(rawHref) {
           saveSession({ type: 'tauri', folderPath: state.folderPath, activeRelPath: entry.relPath });
         }
       } else {
+        pushNavSnapshot();
         setDocSource({ kind: 'file', docPath: abs });
         navigateToDoc(data.content, data.name || fileNameOf(abs), fragment);
         if (isDesktopTauri) saveSession({ type: 'tauri', name: data.name, path: abs });
@@ -209,6 +300,7 @@ async function openLocalDocLink(rawHref) {
         return;
       }
       const text = await readFileAsText(hit.file);
+      pushNavSnapshot();
       setDocSource({ kind: 'folder', relPath: hit.rel });
       highlightTreeFile(hit.rel);
       navigateToDoc(text, hit.rel, fragment);

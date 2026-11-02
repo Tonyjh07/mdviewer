@@ -10,6 +10,8 @@ let urlLoadSeq = 0;
 
 function fetchUrl(url) {
   if (!url) return;
+  // 远程文档是新的根，清掉上一份文档的跨文件返回记录
+  if (typeof clearNavHistory === 'function') clearNavHistory();
   // GitHub blob → raw.githubusercontent.com
   url = url.replace(/^https?:\/\/(?:www\.)?github\.com\/([^/]+\/[^/]+)\/blob\//i, 'https://raw.githubusercontent.com/$1/');
   const seq = ++urlLoadSeq;

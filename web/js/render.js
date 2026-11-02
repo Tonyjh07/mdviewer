@@ -4,6 +4,12 @@ function render(markdown, name, opts) {
   const loading = document.getElementById('loading');
   const androidWelcome = document.querySelector('.android-welcome');
 
+  // 同步记下原文，供跨文件跳转的「返回」使用。
+  // 必须在真正的 setTimeout 渲染之前赋值：跳转时读到的是上一份文档，
+  // 而那份文档此刻仍在屏幕上，正是要回到的目标。
+  state.currentMarkdown = typeof markdown === 'string' ? markdown : '';
+  state.currentName = name || '';
+
   if (renderTimeout) { clearTimeout(renderTimeout); renderTimeout = null; }
   releaseBlobUrls();
 

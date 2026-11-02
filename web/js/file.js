@@ -6,6 +6,8 @@ function loadFile(file) {
     alert('请选择 .md 文件');
     return;
   }
+  // 换了根文档，之前的跨文件返回记录不再适用
+  if (typeof clearNavHistory === 'function') clearNavHistory();
   const seq = ++fileLoadSeq;
   setDocSource({ kind: 'none' });
   state.docFiles = null; // 单文件模式没有可用的文件映射，清掉上一次文件夹的残留
@@ -43,6 +45,7 @@ function readDirRecursive(entry, basePath, isRoot) {
 }
 
 function loadFolder(files, folderPath) {
+  if (typeof clearNavHistory === 'function') clearNavHistory();
   const mdFiles = [];
   const fileMap = new Map();
   for (const f of files) {
@@ -157,6 +160,8 @@ let loadSeq = 0;
 function loadFolderFileByRel(relPath) {
   const idx = state.folderFiles.findIndex(f => f.relPath === relPath);
   if (idx === -1) return;
+  // 从文件树直接切换文档 = 新起点，跳转链断开
+  if (typeof clearNavHistory === 'function') clearNavHistory();
   activeRelPath = relPath;
   const item = state.folderFiles[idx];
 

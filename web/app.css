@@ -235,3 +235,39 @@ input[type="range"] { width: 100%; margin: 4px 0; accent-color: var(--btn-primar
 #imgLightbox.open { display: flex; }
 #imgLightbox img { max-width: 100%; max-height: 100%; border-radius: 8px; box-shadow: 0 12px 40px rgba(0,0,0,.4); object-fit: contain; background: var(--panel-bg); }
 #imgLightbox .lightbox-hint { position: absolute; bottom: 16px; left: 0; right: 0; text-align: center; font-size: 12px; color: var(--text); opacity: .7; pointer-events: none; }
+/* ---- 跨文件跳转的「返回」按钮 ---- */
+#navBackBtn {
+  position: fixed;
+  right: 16px;
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  z-index: 998;
+  display: none;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1;
+  color: var(--text);
+  background: var(--toolbar-bg);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: 0 4px 14px var(--panel-shadow);
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+#navBackBtn.show { display: inline-flex; animation: navBackIn .16s ease-out; }
+#navBackBtn:hover { border-color: var(--text-dim); }
+#navBackBtn:active { transform: scale(.96); }
+#navBackBtn .nav-back-arrow { font-size: 15px; line-height: 1; color: var(--link); }
+#navBackBtn .nav-back-count:not(:empty) {
+  min-width: 16px;
+  padding: 1px 5px;
+  text-align: center;
+  font-size: 11px;
+  border-radius: 9px;
+  background: var(--selection);
+  color: var(--text-dim);
+}
+@keyframes navBackIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
