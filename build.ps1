@@ -68,11 +68,13 @@ $encNoBom = [System.Text.UTF8Encoding]::new($false)
 [System.IO.File]::WriteAllText($md, $mdContent, $encNoBom)
 
 if (-not $SyncOnly) {
+  # cargo 会把进度与 "Info ..." 写到 stderr；PowerShell 5.1 在 $ErrorActionPreference=Stop 下
+  # 会把它当成终止性错误，脚本会在构建刚开始时假失败。交给 cmd 做重定向，保持 stderr 为纯文本流。
   if ($Android) {
     Write-Host "==> Building Android APK v$newVer ..." -ForegroundColor Cyan
     Push-Location $src
     try {
-        cargo tauri android build --apk
+        & cmd /c "cargo tauri android build --apk 2>&1"
         if ($LASTEXITCODE -ne 0) { throw "Android build failed (exit code: $LASTEXITCODE)" }
     } finally {
         Pop-Location
@@ -84,7 +86,7 @@ if (-not $SyncOnly) {
 
     Push-Location $src
     try {
-        cargo tauri build
+        & cmd /c "cargo tauri build 2>&1"
         if ($LASTEXITCODE -ne 0) { throw "Build failed (exit code: $LASTEXITCODE)" }
     } finally {
         Pop-Location

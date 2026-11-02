@@ -30,3 +30,5 @@ mdviewer 的硬性约定。只收录改代码时**必须遵守**的约束；功�
 - Android 构建必须由 `cargo tauri android build` 驱动，不要直接跑 `gen/android/gradlew`：Gradle 的 `rustBuild*` 任务会调 `cargo tauri android android-studio-script`，该子命令依赖 CLI 侧启动的 WebSocket。
 - `gen/android/buildSrc/build.gradle.kts` 的阿里云镜像不能删。只有 `google()` 时国内会卡在直连 `dl.google.com` 且无任何报错。
 - 后台构建命令的输出不要接 `| tail`：管道缓冲区塞满会静默卡死，重定向到文件。
+- 安卓图标用 `application/scripts/gen_android_icons.py` 生成（满铺方形 + 居中 `m`），不要改用 `tauri icon`：后者会连桌面端/网页的圆形图标一起改掉，而安卓启动器的圆角矩形遮罩会把圆形图裁掉字脚。
+- 脚本里调用 `cargo` 时要把 stderr 交给 `cmd` 重定向（`& cmd /c "cargo ... 2>&1"`）：PowerShell 5.1 在 `$ErrorActionPreference='Stop'` 下会把 cargo 的 `Info ...` 当成终止性错误，构建刚起步就假失败。

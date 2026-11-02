@@ -6,7 +6,7 @@
 // 这段代码必须留在 sw.js 里（而不是只写在 init.js），因为旧 SW 连 index.html
 // 都会被缓存，新加在 init.js 里的判断根本没有机会执行。
 
-const CACHE = 'mdviewer-v6';
+const CACHE = 'mdviewer-v7';
 const URLS = [
   './',
   './app.css',

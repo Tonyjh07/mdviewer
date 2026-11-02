@@ -222,6 +222,16 @@ sdkmanager --sdk_root="$ANDROID_HOME" "build-tools;35.0.0"
 - **Gradle 需要能从 PATH 找到 cargo**。如果报 `A problem occurred starting process 'command 'cargo.bat''`，先 `.\gradlew --stop`，再把 `%USERPROFILE%\.cargo\bin` 加进 PATH 后重跑（daemon 会缓存启动时的环境）。
 - 构建日志不要用 `| tail` 接到后台任务上，管道缓冲区塞满后会静默卡死，改用重定向到文件。
 
+### 图标
+
+桌面端与网页共用圆形图标（`app-icon.png` 生成 `icons/*.png|ico|icns`、`web/favicon/`）。安卓启动器会把自适应图标裁成圆角矩形，圆形图会被放大裁掉 `m` 的字脚，因此安卓图标单独按「满铺方形 + 居中 `m`」生成：
+
+```sh
+python application/scripts/gen_android_icons.py   # 需要 pillow
+```
+
+脚本会同时刷新 `gen/android/app/src/main/res/`（打包用）与 `icons/android/`（图标源），不触碰桌面端和网页图标。
+
 ## 技术栈
 
 全部由 CDN 引入；本地代码是多文件、无打包步骤（传统 `<script>` 顺序加载，共享全局作用域，因此 `file://` 双击仍可用）。
