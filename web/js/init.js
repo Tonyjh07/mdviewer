@@ -455,9 +455,21 @@ if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Me
   zoomResetBtn.addEventListener('click', resetZoom);
   document.body.appendChild(zoomResetBtn);
 
-  // Service Worker for offline caching
+  // Service Worker 只服务于浏览器版的离线缓存。
+  // Tauri 桌面/移动端的资源已经内嵌在安装包里，注册 SW 毫无意义，
+  // 而且 sw.js 是 cache-first —— 重新构建后仍会返回旧脚本，表现为“改了但没生效”。
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
+    if (window.__TAURI__) {
+      // 清理历史上被注册过的 SW 与其缓存（老版本没有这层判断）
+      navigator.serviceWorker.getRegistrations()
+        .then(rs => Promise.all(rs.map(r => r.unregister())))
+        .catch(() => {});
+      if (window.caches) {
+        caches.keys().then(ks => Promise.all(ks.map(k => caches.delete(k)))).catch(() => {});
+      }
+    } else {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    }
   }
 
   // 内容区链接点击统一处理（页内锚点 / 跨文件路径 / 外链）

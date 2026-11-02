@@ -96,7 +96,11 @@ if (-not $SyncOnly) {
 $builtSomething = $false
 if (-not $SyncOnly -and -not $Android) {
   $nsisDir = [System.IO.Path]::Combine($src, "target", "release", "bundle", "nsis")
-  $installer = Get-ChildItem -Path $nsisDir -Filter "*.exe" | Select-Object -First 1
+  # 按当前版本号取包；取不到再退回最新生成的那个（目录里会累积历史版本）
+  $installer = Get-ChildItem -Path $nsisDir -Filter "mdviewer_$newVer`_x64-setup.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+  if (-not $installer) {
+    $installer = Get-ChildItem -Path $nsisDir -Filter "*.exe" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+  }
   if ($installer) {
       $builtSomething = $true
       Write-Host ""

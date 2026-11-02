@@ -159,6 +159,15 @@ fn normalize_lexically(p: &Path) -> PathBuf {
     out
 }
 
+/// 把 Windows 的反斜杠统一成正斜杠。
+///
+/// 前端（nav.js / media.js）全程按 `/` 拼路径、做前缀比较，
+/// 若这里返回 `C:\docs\b.md`，`fileNameOf` 之外的比较逻辑就容易踩坑；
+/// 而 Windows 的 `Path` 本身接受 `/`，读文件不受影响。
+fn to_slash(p: &Path) -> String {
+    p.to_string_lossy().replace('\\', "/")
+}
+
 /// 解析 Markdown 文档中的文件路径链接，返回规范化后的绝对路径。
 ///
 /// - `base`：当前文档的绝对路径（相对链接以它所在目录为基准）
@@ -177,13 +186,13 @@ fn resolve_doc_path(base: String, link: String) -> Result<String, String> {
         if !target.is_absolute() && !is_abs_like(&raw) {
             return Err("无法确定该相对链接的基准目录".into());
         }
-        return Ok(normalize_lexically(target).to_string_lossy().to_string());
+        return Ok(to_slash(&normalize_lexically(target)));
     }
     // Path::join 已能正确处理三种情形：
     //   绝对路径替换整个结果、带盘符的路径替换、Windows 的 /foo 继承 base 的盘符
     let dir = base.parent().unwrap_or(base);
     let joined = dir.join(target);
-    Ok(normalize_lexically(&joined).to_string_lossy().to_string())
+    Ok(to_slash(&normalize_lexically(&joined)))
 }
 
 /// 判断路径是否为目录（拖放时使用）
@@ -391,5 +400,13 @@ mod tests {
     #[test]
     fn resolve_doc_path_rejects_empty_link() {
         assert!(resolve_doc_path("guide.md".into(), "   ".into()).is_err());
+    }
+
+    #[test]
+    fn resolve_doc_path_always_outputs_forward_slashes() {
+        // 前端全程按 `/` 拼接与比较，Windows 上不能返回反斜杠
+        let out = resolve_doc_path("C:/notes/guide.md".into(), "sub/other.md".into()).unwrap();
+        assert!(!out.contains('\\'), "got backslashes: {out}");
+        assert_eq!(out, "C:/notes/sub/other.md");
     }
 }

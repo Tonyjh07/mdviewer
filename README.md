@@ -241,7 +241,7 @@ mdviewer/
 │   │   ├── nav.js                   # 跨文件链接：相对/绝对路径解析与跨文档锚点跳转
 │   │   ├── ui.js                    # 侧栏、URL 导入、字号、面板开关
 │   │   └── init.js                  # 应用装配、事件绑定、移动端手势
-│   ├── sw.js                        # Service Worker（离线缓存用）
+│   ├── sw.js                        # Service Worker（仅浏览器版离线缓存；Tauri 下自毁）
 │   ├── manifest.json                # PWA 清单
 │   └── favicon/icon-*.png           # 站点图标
 ├── application/                     # Tauri 桌面+移动应用包装
